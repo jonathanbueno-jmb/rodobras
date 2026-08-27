@@ -11961,5 +11961,71 @@ const PRAZO_TABELAS = {"semOrig":{"ANGELONI":{"ABATIA":7,"ABDON BATISTA":6,"ABEL
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<!-- ============================================================
+     AUTO-IMPORTAÇÃO: busca o Excel do repositório de dados
+     e aciona o mesmo pipeline do botão "Importar" existente.
+     ============================================================ -->
+<script>
+(function(){
+  const BASE_URL  = 'https://github.com/jonathanbueno-jmb/rodobras/releases/download/dados-atuais/';
+  const EXCEL_URL = BASE_URL + 'RODOBD18.xlsx';
+  const META_URL  = BASE_URL + 'meta.json';
+  const LS_KEY    = 'rodobras_last_update';
+
+  let jaImportou = false;
+
+  function importarPlanilha(){
+    fetch(EXCEL_URL + '?v=' + Date.now())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(buffer => {
+        const blob  = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const file  = new File([blob], 'RODOBD18.xlsx', { type: blob.type });
+        const dt    = new DataTransfer();
+        dt.items.add(file);
+        const input = document.getElementById('fileInput');
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        console.log('[AutoLoad] Importação automática disparada com sucesso.');
+      })
+      .catch(err => console.warn('[AutoLoad] Falha ao buscar/importar a planilha:', err));
+  }
+
+  function verificarEImportar(){
+    if (jaImportou) return;
+    jaImportou = true;
+    fetch(META_URL + '?v=' + Date.now())
+      .then(r => r.json())
+      .then(meta => {
+        const conhecida = localStorage.getItem(LS_KEY);
+        if (meta.ultima_atualizacao !== conhecida) {
+          console.log('[AutoLoad] Nova versão detectada, importando...');
+          importarPlanilha();
+          localStorage.setItem(LS_KEY, meta.ultima_atualizacao);
+        } else {
+          console.log('[AutoLoad] Dados já estão na versão mais recente.');
+        }
+      })
+      .catch(() => importarPlanilha()); // se meta.json falhar, importa por segurança
+  }
+
+  // Só dispara a importação DEPOIS que a tela de login for concluída
+  const overlay = document.getElementById('loginOverlay');
+  if (overlay) {
+    if (overlay.classList.contains('hidden')) {
+      setTimeout(verificarEImportar, 800); // sessão já estava logada
+    } else {
+      const mo = new MutationObserver(() => {
+        if (overlay.classList.contains('hidden')) {
+          setTimeout(verificarEImportar, 800);
+          mo.disconnect();
+        }
+      });
+      mo.observe(overlay, { attributes: true, attributeFilter: ['class'] });
+    }
+  } else {
+    window.addEventListener('load', () => setTimeout(verificarEImportar, 1500));
+  }
+})();
+</script>
 </body>
 </html>
