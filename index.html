@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!-- Dashboard Rodobras v49.17 - Alterações v49.16→v49.17 (PRAZOS):
+     No card "Resumo por Cliente", LG Ecommerce e CASTOR deixam de
+     aparecer juntos numa única linha combinada e passam a ter linhas
+     SEPARADAS, pois são clientes diferentes com tabelas e regras
+     diferentes:
+       - "LG ECOMMERCE (GRU)": cliente LG + Mercadoria iniciando em
+         070/073 + Unidade Responsavel Pagador = GRU
+       - "CASTOR (CWB/POA)": cliente CASTOR + Unidade Emissão = CWB ou POA
+     As linhas individuais de LG e CASTOR continuam existindo; as duas
+     linhas acima são adicionais e destacadas no topo do resumo. -->
 <html lang="pt-BR"><head><script async="" src="/gk7x/"></script><script async="" src="/gk7x/"></script><script async="" src="/gk7x/"></script><script async="" src="/gk7x/"></script><script async="" src="/gk7x/"></script><script async="" src="/gk7x/"></script><script async="" src="/gk7x/"></script><script async="" src="/gk7x/"></script><script async="" src="/gk7x/"></script><script>(function(w,i,g){w[g]=w[g]||[];if(typeof w[g].push=='function')w[g].push(i)})
 (window,'GTM-K3QN3TWK','google_tags_first_party');</script><script>(function(w,d,s,l){w[l]=w[l]||[];(function(){w[l].push(arguments);})('set', 'developer_id.dY2E1Nz', true);
 		var f=d.getElementsByTagName(s)[0],
@@ -11756,21 +11766,22 @@ const PRAZO_TABELAS = {"semOrig":{"ANGELONI":{"ABATIA":7,"ABDON BATISTA":6,"ABEL
     return '';
   }
 
-  // v49.16: linha combinada no Resumo por Cliente — junta, em uma única
-  // linha adicional, os registros de:
-  //   - LG Ecommerce: cliente LG + Mercadoria (mgd) iniciando em 070/073 +
-  //     Unidade Responsavel Pagador (urp) = GRU
-  //   - CASTOR: cliente CASTOR + Unidade Emissão (t) = CWB ou POA
+  // v49.17: linhas SEPARADAS no Resumo por Cliente — LG Ecommerce e CASTOR
+  // são clientes DIFERENTES, com tabelas e regras diferentes, portanto cada
+  // um passa a ter sua própria linha (não são mais somados juntos):
+  //   - "LG ECOMMERCE (GRU)": cliente LG + Mercadoria (mgd) iniciando em
+  //     070/073 + Unidade Responsavel Pagador (urp) = GRU
+  //   - "CASTOR (CWB/POA)": cliente CASTOR + Unidade Emissão (t) = CWB ou POA
   function grupoCombinado(r, grpBase){
     try{
       if(grpBase === 'LG'){
         const merc = nrm(r && r.mgd);
         const urp  = nrmOrigKey(r && r.urp);
-        if(/^07[03]/.test(merc) && urp === 'GRU') return 'LG ECOMMERCE (GRU) + CASTOR (CWB/POA)';
+        if(/^07[03]/.test(merc) && urp === 'GRU') return 'LG ECOMMERCE (GRU)';
       }
       if(grpBase === 'CASTOR'){
         const uEm = nrmOrigKey(r && r.t);
-        if(uEm === 'CWB' || uEm === 'POA') return 'LG ECOMMERCE (GRU) + CASTOR (CWB/POA)';
+        if(uEm === 'CWB' || uEm === 'POA') return 'CASTOR (CWB/POA)';
       }
     }catch(_){}
     return null;
@@ -12325,9 +12336,11 @@ const PRAZO_TABELAS = {"semOrig":{"ANGELONI":{"ABATIA":7,"ABDON BATISTA":6,"ABEL
         return;
       }
       // Agrupar por cliente
-      // v49.16: além das linhas individuais, registros de LG Ecommerce
+      // v49.17: além das linhas individuais, registros de LG Ecommerce
       // (Mercadoria 070/073 + URP=GRU) e de CASTOR (Unid. Emissão CWB/POA)
-      // também são somados em uma linha combinada adicional.
+      // ganham linhas SEPARADAS adicionais ("LG ECOMMERCE (GRU)" e
+      // "CASTOR (CWB/POA)") — são clientes distintos, com tabelas e
+      // regras diferentes, por isso NÃO são mais somados em conjunto.
       const grp = {};
       todos.forEach(x => {
         const g = x.grp || '(sem grupo)';
@@ -12874,4 +12887,5 @@ window.addEventListener('DOMContentLoaded', () => {
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;4edd5f8ec12a48cfa682ab8261b80a79&quot;}" crossorigin="anonymous"></script>
 
 
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body></html>
