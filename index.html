@@ -4373,7 +4373,7 @@ function updateRecCount(){
         const decorrido = (horas >= 48)
           ? 'há ' + Math.floor(horas/24) + ' dias'
           : 'há ' + Math.floor(horas) + 'h';
-        extra = ' • <b>Arquivo de ' + sRef + ' (' + decorrido + ')</b>';
+        extra = ' • <b>Atualizado em ' + sRef + ' (' + decorrido + ')</b>';
       } else {
         extra = ' • Arquivo de ' + sRef;
       }
@@ -13005,7 +13005,7 @@ const VERSAO_DADOS = '2026-09-09';
 // Last-Modified do servidor NÃO serve para isso: em hospedagem
 // estática ele traz a data do deploy do site, não a do arquivo.
 // Formatos aceitos: 'AAAA-MM-DD HH:MM', 'AAAA-MM-DDTHH:MM' ou 'AAAA-MM-DD'.
-const DATA_ARQUIVO_DADOS = '2026-09-21 09:43';
+const DATA_ARQUIVO_DADOS = '2026-09-22 09:49';
 
 async function autoCarregarDados() {
   const fileInput = document.getElementById('fileInput');
