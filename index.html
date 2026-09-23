@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dashboard Rodobras v49.31 - Planejamento: botão Importar (XLSX) + coluna DATA no export. Entregas: cards Ocorrências/PROCEDIMENTOS trocados. v49.30 - ROOTFIX: colunas OCO entram no row como 0/1 (SIM->1, soma) + guardião unidade_lock no currentFilter. v49.29 - Fix sessão unidade_lock + cache legado + parser OCO forçado. v49.28 - Hotfix render (getElementById nulos + ufAgg objeto + catch OCO). v49.27 Fix: OCO 51/52/57/58 (flag SIM genérica) · UF card padrão Top10 · OCO card ignora filtro Operação · trava Unidade reforçada. Base v49.26:
+<!-- Dashboard Rodobras v49.32 - Botão Atualizar: agora faz F5 (recarrega a página) e SÓ ENTÃO baixa os dados; a dashboard não baixa mais os dados automaticamente ao abrir (usa os dados já salvos). v49.31 - Planejamento: botão Importar (XLSX) + coluna DATA no export. Entregas: cards Ocorrências/PROCEDIMENTOS trocados. v49.30 - ROOTFIX: colunas OCO entram no row como 0/1 (SIM->1, soma) + guardião unidade_lock no currentFilter. v49.29 - Fix sessão unidade_lock + cache legado + parser OCO forçado. v49.28 - Hotfix render (getElementById nulos + ufAgg objeto + catch OCO). v49.27 Fix: OCO 51/52/57/58 (flag SIM genérica) · UF card padrão Top10 · OCO card ignora filtro Operação · trava Unidade reforçada. Base v49.26:
      1) Card 'UF com Mais Entregas' movido para após 'Ocorrências'.
      2) Novo card 'Ocorrências' após 'Total de Entregas' com códigos
         01/02/03/08/10/11/12/51/52/57/58 usando as colunas
@@ -1606,6 +1606,7 @@ textarea.qual-cell{min-height:34px;line-height:1.35;}
 .qual-chart-box{position:relative;height:260px;}
 @media(max-width:900px){.qual-table-wrap{height:15cm;min-height:15cm;max-height:15cm;}}
 </style>
+<style>#refreshBtn.spinning svg{animation:rbSpin .8s linear infinite}@keyframes rbSpin{to{transform:rotate(360deg)}}#refreshBtn:disabled{opacity:.7;cursor:progress}</style>
 </head>
 <body>
 
@@ -1676,7 +1677,7 @@ textarea.qual-cell{min-height:34px;line-height:1.35;}
   <div class="top-actions">
     <span class="status-pill" id="recCount" title="Total de registros e data/hora da última importação"><span class="dot"></span> 446.002 registros</span>
     <input type="file" id="fileInput" accept=".xlsb,.xlsx,.xls,.json,application/json" style="display:none">
-    <button class="btn ghost" id="refreshBtn" title="Atualizar dashboard (recarrega o arquivo de dados)" aria-label="Atualizar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg></button>
+    <button class="btn ghost" id="refreshBtn" title="Atualizar: recarrega a página (F5) e baixa os dados mais recentes" aria-label="Atualizar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg></button>
     <button class="btn ghost" id="exportBtn" title="Exportar relatório (Excel, PDF ou JSON)">Exportar</button>
     <button class="btn ghost" id="importBtn" title="Importar arquivo Excel (xlsx/xlsb/xls) ou JSON">Importar</button>
     <button class="btn hamburger" id="menuBtn" title="Menu" aria-label="Abrir menu">
@@ -11440,14 +11441,19 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
     const btn = document.getElementById('refreshBtn');
     if(!btn || btn.__bound) return;
     btn.__bound = true;
+    // v49.32: ATUALIZAR = F5 (recarrega a página) + atualização dos dados.
+    // Grava a flag e recarrega; após o reload o autoload lê a flag e baixa os dados.
     btn.addEventListener('click', ()=>{
-      try{
-        if(typeof autoCarregarDados === 'function'){
-          autoCarregarDados();
-        } else {
-          location.reload();
-        }
-      }catch(_){ location.reload(); }
+      if(btn.__busy) return;
+      btn.__busy = true;
+      btn.disabled = true;
+      btn.classList.add('spinning');
+      try{ sessionStorage.setItem('rb_refresh_pending', '1'); }catch(_){}
+      const ov = document.getElementById('overlay');
+      const ovt = document.getElementById('overlayText');
+      if(ov) ov.classList.add('show');
+      if(ovt) ovt.textContent = 'Atualizando dashboard...';
+      setTimeout(()=>{ location.reload(); }, 150);
     });
   }
   if(document.readyState === 'loading'){
@@ -13139,7 +13145,7 @@ async function autoCarregarDados() {
   try {
     console.log('[AutoLoad] Buscando:', URL_DADOS);
 
-    const resposta = await fetch(`${URL_DADOS}?v=${VERSAO_DADOS}`);
+    const resposta = await fetch(`${URL_DADOS}?v=${VERSAO_DADOS}&t=${Date.now()}`, { cache: 'no-store' });
     if (!resposta.ok) {
       throw new Error(
         `Arquivo não encontrado (HTTP ${resposta.status}). ` +
@@ -13209,7 +13215,16 @@ async function autoCarregarDados() {
 // Pequeno atraso após o DOM carregar, garantindo que o listener do
 // #fileInput já foi registrado pelo código principal da dashboard
 // antes de dispararmos o evento 'change' programaticamente.
+// v49.32: NÃO carrega mais automaticamente ao abrir a dashboard.
+// Os dados só são baixados depois que o usuário clica em ATUALIZAR:
+// o botão grava uma flag no sessionStorage e recarrega a página (F5);
+// após o recarregamento, a flag é lida aqui e o download é disparado.
+window.__RB_REFRESH_FLAG = 'rb_refresh_pending';
 window.addEventListener('DOMContentLoaded', () => {
+  let pendente = false;
+  try { pendente = sessionStorage.getItem(window.__RB_REFRESH_FLAG) === '1'; } catch(_) {}
+  if (!pendente) return; // abertura normal / F5 do teclado: usa os dados já salvos
+  try { sessionStorage.removeItem(window.__RB_REFRESH_FLAG); } catch(_) {}
   setTimeout(autoCarregarDados, 1000);
 });
 </script>
@@ -13223,6 +13238,7 @@ window.addEventListener('DOMContentLoaded', () => {
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script id="_waupmx">var _wau = _wau || []; _wau.push(["small", "3gr0qd6no0", "pmx"]);</script><script async src="//waust.at/s.js"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
