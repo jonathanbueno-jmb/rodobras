@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dashboard Rodobras v49.32 - Botão Atualizar: agora faz F5 (recarrega a página) e SÓ ENTÃO baixa os dados; a dashboard não baixa mais os dados automaticamente ao abrir (usa os dados já salvos). v49.31 - Planejamento: botão Importar (XLSX) + coluna DATA no export. Entregas: cards Ocorrências/PROCEDIMENTOS trocados. v49.30 - ROOTFIX: colunas OCO entram no row como 0/1 (SIM->1, soma) + guardião unidade_lock no currentFilter. v49.29 - Fix sessão unidade_lock + cache legado + parser OCO forçado. v49.28 - Hotfix render (getElementById nulos + ufAgg objeto + catch OCO). v49.27 Fix: OCO 51/52/57/58 (flag SIM genérica) · UF card padrão Top10 · OCO card ignora filtro Operação · trava Unidade reforçada. Base v49.26:
+<!-- Dashboard Rodobras v49.33 - CUSTOS: evento 5104 passa a ser considerado na importação da aba custos (soma no card Total de Custo por Evento, Custos por Unidade, Evolução Mensal e filtro Evento; é preciso reimportar/Atualizar uma vez). v49.32 - Botão Atualizar: agora faz F5 (recarrega a página) e SÓ ENTÃO baixa os dados; a dashboard não baixa mais os dados automaticamente ao abrir (usa os dados já salvos). v49.31 - Planejamento: botão Importar (XLSX) + coluna DATA no export. Entregas: cards Ocorrências/PROCEDIMENTOS trocados. v49.30 - ROOTFIX: colunas OCO entram no row como 0/1 (SIM->1, soma) + guardião unidade_lock no currentFilter. v49.29 - Fix sessão unidade_lock + cache legado + parser OCO forçado. v49.28 - Hotfix render (getElementById nulos + ufAgg objeto + catch OCO). v49.27 Fix: OCO 51/52/57/58 (flag SIM genérica) · UF card padrão Top10 · OCO card ignora filtro Operação · trava Unidade reforçada. Base v49.26:
      1) Card 'UF com Mais Entregas' movido para após 'Ocorrências'.
      2) Novo card 'Ocorrências' após 'Total de Entregas' com códigos
         01/02/03/08/10/11/12/51/52/57/58 usando as colunas
@@ -6385,6 +6385,7 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
     // coluna VLR PARCELA. Mês = INCLUSAO | Unidade = UNI | Descrição =
     // DESCR EVENTO.
     // v49.20: o evento 5101 passa a entrar na contagem de custos.
+    // v49.33: o evento 5104 também passa a entrar na contagem de custos.
     try {
       const uSheet = wb.SheetNames.find(n => String(n).trim().toLowerCase() === 'custos')
                   || wb.SheetNames.find(n => String(n).trim().toLowerCase() === 'custo');
@@ -6392,7 +6393,7 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
         const uWs = wb.Sheets[uSheet];
         const uArr = XLSX.utils.sheet_to_json(uWs, { header:1, defval:null, blankrows:false, raw:true });
         const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-        const EVENTOS_ALVO = new Set([5501, 5103, 5209, 5117, 5225, 5129, 5101]); // v49.20: + 5101
+        const EVENTOS_ALVO = new Set([5501, 5103, 5209, 5117, 5225, 5129, 5101, 5104]); // v49.20: + 5101 | v49.33: + 5104
 
         // --- Localiza as colunas pelo nome do cabeçalho ---
         const normHdrC = (x)=> String(x==null?'':x)
@@ -6443,7 +6444,7 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
         for(let i=hdrRow+1; i<uArr.length; i++){
           const r = uArr[i]; if(!r) continue;
           const evt = parseInt(r[colEvento], 10);
-          if(!EVENTOS_ALVO.has(evt)) continue;               // só os eventos-alvo (inclui 5101 desde a v49.20)
+          if(!EVENTOS_ALVO.has(evt)) continue;               // só os eventos-alvo (inclui 5101 desde a v49.20 e 5104 desde a v49.33)
           const mes = mesFromIncl(colIncl >= 0 ? r[colIncl] : null);
           const unidade = (colUni >= 0 ? norm(r[colUni]).toUpperCase() : '');
           uOut.push({
@@ -7013,7 +7014,7 @@ function exportExcel(){
       wsAval['!cols'] = aHdr.map(h=>({ wch: Math.max(12, h.length+2) }));
     }
 
-    // v49.10: Custos sheet (eventos 5501/5103/5209/5117/5225/5129/5101, VLR PARCELA)
+    // v49.10: Custos sheet (eventos 5501/5103/5209/5117/5225/5129/5101/5104, VLR PARCELA)
     let wsCusto = null;
     if(DATA_CUSTO && DATA_CUSTO.length){
       const mesCap = (m)=> m ? String(m).charAt(0).toUpperCase() + String(m).slice(1) : '';
@@ -7758,6 +7759,7 @@ document.addEventListener('click', e=>{
    v49.10: soma a coluna VLR PARCELA apenas dos eventos
    5501, 5103, 5209, 5117, 5225 e 5129 (coluna EVENTO).
    v49.20: o evento 5101 também passa a ser somado.
+   v49.33: o evento 5104 também passa a ser somado.
    Mês = coluna INCLUSAO | Unidade = coluna UNI |
    Descrição = coluna DESCR EVENTO.
    ======================================================== */
@@ -13238,6 +13240,7 @@ window.addEventListener('DOMContentLoaded', () => {
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script id="_waupmx">var _wau = _wau || []; _wau.push(["small", "3gr0qd6no0", "pmx"]);</script><script async src="//waust.at/s.js"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
