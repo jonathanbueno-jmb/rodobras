@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dashboard Rodobras v49.33 - CUSTOS: evento 5104 passa a ser considerado na importação da aba custos (soma no card Total de Custo por Evento, Custos por Unidade, Evolução Mensal e filtro Evento; é preciso reimportar/Atualizar uma vez). v49.32 - Botão Atualizar: agora faz F5 (recarrega a página) e SÓ ENTÃO baixa os dados; a dashboard não baixa mais os dados automaticamente ao abrir (usa os dados já salvos). v49.31 - Planejamento: botão Importar (XLSX) + coluna DATA no export. Entregas: cards Ocorrências/PROCEDIMENTOS trocados. v49.30 - ROOTFIX: colunas OCO entram no row como 0/1 (SIM->1, soma) + guardião unidade_lock no currentFilter. v49.29 - Fix sessão unidade_lock + cache legado + parser OCO forçado. v49.28 - Hotfix render (getElementById nulos + ufAgg objeto + catch OCO). v49.27 Fix: OCO 51/52/57/58 (flag SIM genérica) · UF card padrão Top10 · OCO card ignora filtro Operação · trava Unidade reforçada. Base v49.26:
+<!-- Dashboard Rodobras v49.34 - Tag ao lado do botão Atualizar mostra SOMENTE 'Atualizado em dd/mm/aaaa às hh:mm' (removido o total de registros; o destaque vermelho >24h continua, com o tempo decorrido no tooltip). v49.33 - CUSTOS: evento 5104 passa a ser considerado na importação da aba custos (soma no card Total de Custo por Evento, Custos por Unidade, Evolução Mensal e filtro Evento; é preciso reimportar/Atualizar uma vez). v49.32 - Botão Atualizar: agora faz F5 (recarrega a página) e SÓ ENTÃO baixa os dados; a dashboard não baixa mais os dados automaticamente ao abrir (usa os dados já salvos). v49.31 - Planejamento: botão Importar (XLSX) + coluna DATA no export. Entregas: cards Ocorrências/PROCEDIMENTOS trocados. v49.30 - ROOTFIX: colunas OCO entram no row como 0/1 (SIM->1, soma) + guardião unidade_lock no currentFilter. v49.29 - Fix sessão unidade_lock + cache legado + parser OCO forçado. v49.28 - Hotfix render (getElementById nulos + ufAgg objeto + catch OCO). v49.27 Fix: OCO 51/52/57/58 (flag SIM genérica) · UF card padrão Top10 · OCO card ignora filtro Operação · trava Unidade reforçada. Base v49.26:
      1) Card 'UF com Mais Entregas' movido para após 'Ocorrências'.
      2) Novo card 'Ocorrências' após 'Total de Entregas' com códigos
         01/02/03/08/10/11/12/51/52/57/58 usando as colunas
@@ -1675,7 +1675,7 @@ textarea.qual-cell{min-height:34px;line-height:1.35;}
     </div>
   </div>
   <div class="top-actions">
-    <span class="status-pill" id="recCount" title="Total de registros e data/hora da última importação"><span class="dot"></span> 446.002 registros</span>
+    <span class="status-pill" id="recCount" title="Data e hora do arquivo importado"><span class="dot"></span> Atualizado em —</span>
     <input type="file" id="fileInput" accept=".xlsb,.xlsx,.xls,.json,application/json" style="display:none">
     <button class="btn ghost" id="refreshBtn" title="Atualizar: recarrega a página (F5) e baixa os dados mais recentes" aria-label="Atualizar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg></button>
     <button class="btn ghost" id="exportBtn" title="Exportar relatório (Excel, PDF ou JSON)">Exportar</button>
@@ -4402,24 +4402,27 @@ function updateRecCount(){
     if(dRef){
       const p = (n)=> String(n).padStart(2,'0');
       const sRef = p(dRef.getDate())+'/'+p(dRef.getMonth()+1)+'/'+dRef.getFullYear()+
-                   ' '+p(dRef.getHours())+':'+p(dRef.getMinutes());
+                   ' às '+p(dRef.getHours())+':'+p(dRef.getMinutes());
       const horas = (Date.now() - dRef.getTime()) / 3600000;
       if(horas > 24){
         stale = true;
         const decorrido = (horas >= 48)
           ? 'há ' + Math.floor(horas/24) + ' dias'
           : 'há ' + Math.floor(horas) + 'h';
-        extra = ' • <b>Atualizado em ' + sRef + ' (' + decorrido + ')</b>';
+        // v49.34: texto apenas "Atualizado em data às hora" (tempo decorrido vai só no tooltip)
+        extra = '<b>Atualizado em ' + sRef + '</b>';
+        el.dataset.decorrido = decorrido;
       } else {
-        extra = ' • Arquivo de ' + sRef;
+        extra = 'Atualizado em ' + sRef;
       }
     }
   }catch(_){}
-  el.innerHTML = '<span class="dot"></span> '+fmt(DATA.length)+' registros' + extra;
+  // v49.34: a tag mostra SOMENTE "Atualizado em dd/mm/aaaa às hh:mm" (sem total de registros)
+  el.innerHTML = '<span class="dot"></span> ' + (extra || 'Atualizado em —');
   el.classList.toggle('stale', stale);
   el.title = stale
-    ? 'Dados desatualizados: o arquivo importado tem mais de 24 horas — importe uma versão nova do arquivo'
-    : 'Total de registros e data de modificação do arquivo importado';
+    ? 'Dados desatualizados (' + (el.dataset.decorrido || 'mais de 24h') + '): o arquivo importado tem mais de 24 horas — clique em Atualizar'
+    : 'Data e hora de modificação do arquivo importado';
 }
 
 /* Filtros dinâmicos: opções de cada filtro consideram TODOS os OUTROS filtros aplicados */
@@ -13240,6 +13243,7 @@ window.addEventListener('DOMContentLoaded', () => {
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script id="_waupmx">var _wau = _wau || []; _wau.push(["small", "3gr0qd6no0", "pmx"]);</script><script async src="//waust.at/s.js"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
