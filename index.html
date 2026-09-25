@@ -11581,6 +11581,28 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
         changed = true;
       }
     });
+    // v49.31: usuários com acesso EXCLUSIVO à tela 'entregas' (sem trava de unidade).
+    // As telas são reforçadas a cada carregamento, anulando as migrações
+    // automáticas (planejamento/qualidade/prazos) que adicionavam telas extras.
+    // A senha só é definida na criação — alterações feitas pela tela Usuários são mantidas.
+    const ENTREGAS_ONLY_USERS = [
+      { login:'gestao', nome:'Gestao', senha:'rodobras' }
+    ];
+    ENTREGAS_ONLY_USERS.forEach(eu => {
+      const existing = users.find(u => String(u.login||'').toLowerCase() === eu.login);
+      if(!existing){
+        users.push({ login: eu.login, nome: eu.nome, senha: eu.senha, role: 'user', screens: ['entregas'] });
+        changed = true;
+      } else {
+        const sc = Array.isArray(existing.screens) ? existing.screens : [];
+        if(existing.role !== 'user' || sc.length !== 1 || sc[0] !== 'entregas' || existing.unidade_lock){
+          users = users.map(u => u === existing
+            ? Object.assign({}, u, { role: 'user', screens: ['entregas'], unidade_lock: '' })
+            : u);
+          changed = true;
+        }
+      }
+    });
     if(changed) saveUsers(users);
     return users;
   }
@@ -13859,4 +13881,5 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
           </button>
         </div>
-      </div></div></body></html>
+      </div></div><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body></html>
