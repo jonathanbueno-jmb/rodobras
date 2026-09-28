@@ -7379,7 +7379,13 @@ function openExportModal(){
         </div>
       </div>`;
     document.body.appendChild(modal);
+  }
 
+  /* FIX: handlers são ligados sempre (uma vez por elemento), mesmo que o modal já
+     exista no HTML salvo. Controle em memória (WeakSet) para não ser serializado por outerHTML. */
+  if(!openExportModal.__bound) openExportModal.__bound = new WeakSet();
+  if(!openExportModal.__bound.has(modal)){
+    openExportModal.__bound.add(modal);
     const close = () => modal.classList.remove('show');
     modal.addEventListener('click', (e) => { if(e.target === modal) close(); });
     modal.querySelector('#expModalClose').addEventListener('click', close);
@@ -11907,7 +11913,9 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
       const users = ensureMaster();
       const jsonUsers = JSON.stringify(users, null, 2).replace(/<\/(script)/gi, '<\\/$1');
       const replacement = '/*BEGIN_EMBEDDED_USERS_v49_16*/\n  window.EMBEDDED_USERS_HTML = ' + jsonUsers + ';\n  /*END_EMBEDDED_USERS_v49_16*/';
-      let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const __clone = document.documentElement.cloneNode(true);
+      const __m = __clone.querySelector('#exportModal'); if(__m) __m.remove();
+      let html = '<!DOCTYPE html>\n' + __clone.outerHTML;
       const re = /\/\*BEGIN_EMBEDDED_USERS_v49_16\*\/[\s\S]*?\/\*END_EMBEDDED_USERS_v49_16\*\//;
       if(re.test(html)) html = html.replace(re, replacement);
       const blob = new Blob([html], { type:'text/html;charset=utf-8' });
@@ -13848,39 +13856,5 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;4edd5f8ec12a48cfa682ab8261b80a79&quot;,&quot;spa&quot;:2}" crossorigin="anonymous"></script>
-<div id="exportModal" class="export-modal-backdrop">
-      <div class="export-modal" role="dialog" aria-modal="true" aria-label="Exportar relatório">
-        <button class="export-modal-close" id="expModalClose" aria-label="Fechar">×</button>
-        <h3>Exportar relatório</h3>
-        <p>Escolha o formato em que deseja gerar o relatório:</p>
-        <div class="export-options">
-          <button class="export-opt-card" id="expOptExcel">
-            <span class="export-opt-icon" style="background:linear-gradient(135deg,#16a34a,#22c55e);">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
-            </span>
-            <div class="export-opt-text">
-              <strong>Excel</strong>
-              <small>Relatório completo com todas as planilhas</small>
-            </div>
-          </button>
-          <button class="export-opt-card" id="expOptPdf">
-            <span class="export-opt-icon" style="background:linear-gradient(135deg,#dc2626,#ef4444);">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="15" r="3"></circle></svg>
-            </span>
-            <div class="export-opt-text">
-              <strong>PDF</strong>
-              <small>Imagens da tela ativa atual</small>
-            </div>
-          </button>
-          <button class="export-opt-card" id="expOptJson">
-            <span class="export-opt-icon" style="background:linear-gradient(135deg,#0057B7,#0ea5e9);">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 13a2 2 0 0 1-2 2v0a2 2 0 0 1 2 2"></path><path d="M15 13a2 2 0 0 0 2 2v0a2 2 0 0 0-2 2"></path></svg>
-            </span>
-            <div class="export-opt-text">
-              <strong>JSON</strong>
-              <small>Backup completo (pode ser reimportado)</small>
-            </div>
-          </button>
-        </div>
-      </div></div><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body></html>
