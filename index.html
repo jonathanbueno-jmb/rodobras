@@ -1928,6 +1928,15 @@ window.rodoLogoCliente = function(nome){
     </div>
   </div>
 
+  <!-- TENDÊNCIA — ÚLTIMOS 7 REGISTROS DO HISTÓRICO (copiado da tela Gestão) -->
+  <div class="grid-1">
+    <div class="panel">
+      <h3><span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"></polyline><polyline points="14 7 21 7 21 14"></polyline></svg></span>Últimos 7 registros </h3>
+      <div class="chart-wrap wide" style="height:320px"><canvas id="chartTendenciaHist"></canvas></div>
+      <div id="tendenciaHistInfo" style="margin-top:8px;font-size:12px;color:#666;text-align:center"></div>
+    </div>
+  </div>
+
   <!-- NOVO PAINEL: NÍVEL DE SERVIÇO MENSAL (não filtra por mês) -->
   <div class="grid-1">
     <div class="panel">
@@ -5163,6 +5172,7 @@ function render(){
 
   /* ====== v30: OCORRÊNCIA 73 POR DIA ====== */
   renderOcorr73PorDia(rows);
+  renderTendenciaHistorico();
 
   /* ====== NÍVEL DE SERVIÇO MENSAL (ignora filtro de mês) ====== */
   renderNivelServicoMensal(f);
@@ -5837,6 +5847,131 @@ function renderOcorr73PorDia(rows){
       }
     }
   });
+}
+
+// Tendência — últimos 7 registros do histórico (NS por dia).
+// v49.35: o histórico é gerado DIA A DIA. Cada dia guarda DOIS cubos de contagens [ok, base] por combinação de
+// Ano/Mês/UF/Cliente/Unidade/Ocorrência/Operação: 'a' = NS ACUMULADO da base (o mesmo NS da tela, linha azul contínua) e
+// 'd' = NS só das entregas daquele dia (linha pontilhada). Ambos reagem a TODOS os filtros da tela.
+// Nada é reconstruído: dias já gravados ficam congelados; só o dia de hoje é (re)gravado.
+// Compatível com registros antigos (v5 guardava só o cubo acumulado direto, sem 'a'/'d').
+const TEND_HIST_DB  = 'tendencia_historico_v5';           // IndexedDB, comprimido — NS real por dia
+const TEND_META_NS = 97;
+const TEND_DIAS_GUARDADOS = 30;
+let _tendCubo = null, _tendCuboSig = '', _tendHistP = null, _tendSavedSig = '';
+function _tendHoje(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _tendLS(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+// Cubos de hoje numa só passada: a = base inteira (acumulado); d = só entregas com data de entrega = hoje.
+// Regra do NS igual à da tela: (NO PRAZO + JUSTIFICADO) / (NO PRAZO + ATRASADO).
+function _tendCubo_(){
+  const hoje = _tendHoje();
+  const sig = hoje+'|'+(DATA?DATA.length:0)+'|'+(_tendLS(LAST_IMPORT_KEY)||'');
+  if(_tendCubo && sig===_tendCuboSig) return _tendCubo;
+  const a = {}, d = {};
+  (DATA||[]).forEach(r=>{
+    if(r.c!=='ENTREGUE') return;
+    let ok=0, base=0;
+    if(r.e==='NO PRAZO'){ ok++; base++; } else if(r.e==='ATRASADO'){ base++; } else return;
+    if(r.fm==='JUSTIFICADO') ok++;
+    const k=[yearFromEt(r.et)||'', r.fd||'', r.m||'', r.a||'', r.n||'', r.fk==null?'':r.fk, r.f||''].join('|');
+    const o = a[k] || (a[k]=[0,0]); o[0]+=ok; o[1]+=base;
+    if(_tendDataEntrega(r)===hoje){ const q = d[k] || (d[k]=[0,0]); q[0]+=ok; q[1]+=base; }
+  });
+  _tendCubo = {a:a, d:d}; _tendCuboSig = sig; return _tendCubo;
+}
+// Carrega o histórico 1x do IndexedDB. Nunca rejeita.
+function _tendCarregar(){
+  if(_tendHistP) return _tendHistP;
+  _tendHistP = (async()=>{
+    let h = {};
+    try{
+      const v = await dbGetMaybeCompressed(TEND_HIST_DB);
+      if(v && typeof v==='object' && !Array.isArray(v)) h = v;
+    }catch(e){ console.warn('[Tendência] IndexedDB indisponível — histórico só em memória', e); }
+    return h;
+  })();
+  return _tendHistP;
+}
+// Grava/atualiza apenas o dia de hoje. Dias anteriores permanecem como foram gravados.
+function _tendSalvarHoje(h){
+  const cubo = _tendCubo_(); if(!Object.keys(cubo.a).length) return;
+  const hoje = _tendHoje(), sig = hoje+'|'+_tendCuboSig;
+  if(sig===_tendSavedSig) return;              // nada mudou desde a última gravação
+  h[hoje] = { a:cubo.a, d:cubo.d };
+  const ds = Object.keys(h).sort(); while(ds.length>TEND_DIAS_GUARDADOS) delete h[ds.shift()];
+  _tendSavedSig = sig;
+  dbSetCompressed(TEND_HIST_DB, h).catch(e=>{ _tendSavedSig=''; console.warn('[Tendência] histórico não salvo', e); });
+}
+function _tendNSCubo(cubo, f){
+  let ok=0, base=0;
+  for(const k in cubo){
+    const p = k.split('|');
+    if(f.ano && p[0]!==String(f.ano)) continue;
+    if(f.mes && p[1]!==String(f.mes)) continue;
+    if(f.uf  && p[2]!==f.uf)  continue;
+    if(f.cli && p[3]!==f.cli) continue;
+    if(f.uni && p[4]!==f.uni) continue;
+    if(f.oco && p[5]!==String(f.oco)) continue;
+    if(f.op  && p[6]!==f.op)  continue;
+    ok += cubo[k][0]; base += cubo[k][1];
+  }
+  return base ? Math.round(ok/base*1000)/10 : null;
+}
+// v49.32: data completa da entrega = Ano + Mês (fd) + Dia Entrega (fc). O ano vem da coluna Ano; se faltar,
+// usa o ano da Previsão de Entrega (com virada de ano: previsto p/ dez e entregue em jan → ano+1).
+function _tendDataEntrega(r){
+  const mi = MES_ORDER.indexOf(String(r.fd||'').toLowerCase());
+  const dia = parseInt(r.fc,10);
+  if(mi<0 || !(dia>=1 && dia<=31)) return '';
+  let y = parseInt(r.an,10);
+  if(!(y>=2000 && y<=2100)){
+    y = parseInt(yearFromEt(r.et),10); if(!y) return '';
+    const em = r.et ? parseInt(String(r.et).slice(5,7),10)-1 : mi;
+    if(em-mi>6) y++;
+  }
+  return y+'-'+String(mi+1).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
+}
+async function renderTendenciaHistorico(){
+  const info = document.getElementById('tendenciaHistInfo');
+  try{
+    const h = await _tendCarregar();
+    const f = currentFilter();
+    _tendSalvarHoje(h);
+    // v49.35: dois valores por dia gravado — acumulado (= NS da tela) e NS só do dia. Nada é reconstruído.
+    const hist = Object.keys(h).sort().map(d=>{
+      const e = h[d] || {};
+      const cA = e.a ? e.a : e;                 // registro antigo: o próprio objeto é o cubo acumulado
+      const cD = e.a ? e.d : null;              // registro antigo não tem NS do dia
+      return { dia:d, ns:_tendNSCubo(cA, f), nsDia: cD ? _tendNSCubo(cD, f) : null };
+    }).filter(x=>x.ns!==null || x.nsDia!==null).slice(-7);
+    if(info){
+      info.textContent = hist.length===0 ? 'Ainda sem registros diários para o filtro atual — o histórico é gerado dia a dia.'
+        : '';
+    }
+    destroy('chartTendenciaHist');
+    const el = document.getElementById('chartTendenciaHist'); if(!el) return;
+    const so1 = hist.length<2;   // com 1 ponto só, a linha da Meta some — desenha um traço marcador
+    charts['chartTendenciaHist'] = new Chart(el.getContext('2d'), {
+      type:'line',
+      data:{ labels: hist.map(x=>x.dia.slice(8,10)+'/'+x.dia.slice(5,7)),
+        datasets:[
+          { label:'NS acumulado (%)', data: hist.map(x=>x.ns), borderColor:'#0057b7', backgroundColor:'rgba(0,87,183,0.10)', fill:true, tension:0.35, borderWidth:2,
+            pointRadius:5, pointBackgroundColor:'#0057b7',
+            datalabels:{ display:true, align:'top', color:'#0F1B2D', font:{weight:'bold',size:11}, formatter:v=>String(v).replace('.',',')+'%' } },
+          { label:'NS do dia (%)', data: hist.map(x=>x.nsDia), borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.10)', fill:false, tension:0.25, borderWidth:2, borderDash:[2,4],
+            spanGaps:true, pointRadius:4, pointStyle:'circle', pointBackgroundColor:'#fff', pointBorderColor:'#f59e0b', pointBorderWidth:2,
+            datalabels:{ display:true, align:'bottom', color:'#b45309', font:{weight:'bold',size:10}, formatter:v=>String(v).replace('.',',')+'%' } },
+          { label:'Meta', data: hist.map(()=>TEND_META_NS), borderColor:'#dc2626', borderDash:[6,4], borderWidth:1.5, fill:false,
+            pointRadius: so1 ? 16 : 0, pointStyle:'line', pointBorderColor:'#dc2626', pointBorderWidth:2, datalabels:{ display:false } }
+        ] },
+      options:{ responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:24, bottom:8 } },
+        plugins:{ legend:{ display:true, position:'bottom' } },
+        scales:{ y:{ suggestedMin:90, suggestedMax:100, grid:{ color:'#eef2f7' } }, x:{ grid:{display:false} } } }
+    });
+  }catch(e){
+    console.warn('[Tendência] erro', e);
+    if(info) info.textContent = 'Não foi possível montar o gráfico: ' + (e && e.message ? e.message : e);
+  }
 }
 
 function renderNivelServicoMensal(f){
