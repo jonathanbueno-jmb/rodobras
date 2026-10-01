@@ -6225,7 +6225,7 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
   }
   // v30: Para arquivos grandes, exibe tamanho e usa leitura otimizada (dense mode) com yields de UI
   const fileSizeMB = (file.size / (1024*1024)).toFixed(1);
-  showOverlay('Lendo planilha ('+fileSizeMB+' MB)...');
+  showOverlay('Atualizando ('+fileSizeMB+' MB)...');
   // pequena pausa para o overlay aparecer antes de bloquear a thread com a leitura
   await new Promise(res => setTimeout(res, 30));
   try {
