@@ -1506,6 +1506,29 @@ textarea.qual-cell{min-height:34px;line-height:1.35;}
 .qual-chart-card h3{margin:0 0 10px;font:700 13px Inter,Arial,sans-serif;color:#0f172a;text-transform:uppercase;letter-spacing:.4px;}
 .qual-chart-box{position:relative;height:260px;}
 @media(max-width:900px){.qual-table-wrap{height:15cm;min-height:15cm;max-height:15cm;}}
+
+  /* v49.48: card UF — resumo por operação LG (filtro Cliente = LG ELETRONICS) */
+  .lg-ops{margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);}
+  .lg-ops .lg-ops-title{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--text-soft);margin-bottom:6px;}
+  .lg-ops table{width:100%;border-collapse:collapse;font-size:12px;}
+  .lg-ops th{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-soft);text-align:right;padding:2px 4px 4px;white-space:nowrap;}
+  .lg-ops th:first-child,.lg-ops td:first-child{text-align:left;}
+  .lg-ops td{padding:5px 4px;border-top:1px solid var(--border);text-align:right;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .lg-ops td:first-child{font-weight:700;white-space:normal;line-height:1.2;}
+  .lg-ops td.ab{font-weight:700;color:var(--bad);}
+  .lg-ops td.ab.zero{color:var(--text-soft);font-weight:600;}
+  .lg-ops tfoot td{border-top:2px solid var(--border);font-weight:800;padding-top:7px;}
+  /* v49.50: filtro Operação dentro do card LG (topo direito) — mesmo visual do filtro Operação da dash */
+  .lg-ops .lg-ops-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .lg-ops .lg-ops-head .lg-ops-title{margin-bottom:0;}
+  .lg-ops .lg-ops-filter{display:flex;flex-direction:column;gap:3px;min-width:120px;margin-left:auto;}
+  .lg-ops .lg-ops-filter label{font-size:10px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.5px;}
+  .lg-ops .lg-ops-filter select{
+    border:1px solid var(--border);border-radius:8px;padding:6px 8px;background:#fff;color:var(--text);
+    font-size:12px;font-family:inherit;outline:none;transition:border-color .15s ease;width:100%;
+  }
+  .lg-ops .lg-ops-filter select:focus{border-color:var(--rodo-blue-light);box-shadow:0 0 0 3px rgba(30,120,216,.15);}
+  body.dark .lg-ops .lg-ops-filter select{background:#232E42;color:var(--text);border-color:var(--border);}
 </style>
 <style>#refreshBtn.spinning svg{animation:rbSpin .8s linear infinite}@keyframes rbSpin{to{transform:rotate(360deg)}}#refreshBtn:disabled{opacity:.7;cursor:progress}</style>
 <script>
@@ -1712,7 +1735,7 @@ window.rodoLogoCliente = function(nome){
         <div class="gauge-text"><div class="pct" id="gaugePct">96,7%</div><div class="lbl">No prazo</div></div>
       </div>
       <div class="gauge-meta">
-        <span class="meta-pill">Meta: 97%</span>
+        <span class="meta-pill" id="gaugeMetaPill">Meta: 97%</span>
         <span class="meta-status bad" id="gaugeMetaStatus">▼ 0,3 p.p. abaixo</span>
       </div>
     </div>
@@ -1781,6 +1804,13 @@ window.rodoLogoCliente = function(nome){
       </div>
     </div>
 
+    <!-- v16: Top 5 UFs (mais entregas) - sem total no topo direito; cada UF mostra % do total geral -->
+    <div class="card" id="cardTop5Ufs">
+      <div class="card-title"><span class="title-left"><span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg></span> Top 5 UFs (mais entregas)</span></div>
+      <div class="sub" id="kTop5UfsBody" style="margin-top:6px;"><div class="line"><span><span class="uf-rank-num">1</span>PR</span><b>12.987</b></div></div>
+      <div id="top5LgOps" class="lg-ops" style="display:none"></div>
+    </div>
+
     <div class="card">
       <div class="card-title"><span class="title-left"><span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="11" rx="1" ry="1"></rect><path d="M15 9h4l3 4v4h-7"></path><circle cx="6" cy="19" r="2"></circle><circle cx="18" cy="19" r="2"></circle></svg></span> Previsão de Entrega</span><span class="title-right" id="kPrevTitle">412</span></div>
       <div class="sub" style="margin-top:4px;">
@@ -1841,11 +1871,6 @@ window.rodoLogoCliente = function(nome){
       </div>
     </div>
 
-    <!-- v16: Top 5 UFs (mais entregas) - sem total no topo direito; cada UF mostra % do total geral -->
-    <div class="card">
-      <div class="card-title"><span class="title-left"><span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg></span> Top 5 UFs (mais entregas)</span></div>
-      <div class="sub" id="kTop5UfsBody" style="margin-top:6px;"><div class="line"><span><span class="uf-rank-num">1</span>PR</span><b>12.987</b></div></div>
-    </div>
 
     <!-- v15: Card Agendamento por UF -->
     <div class="card">
@@ -4953,6 +4978,114 @@ function render(){
       .forEach(id => { const e = document.getElementById(id); if(e) e.textContent = '0%'; });
   }
 
+  // v49.48: Top 5 UFs (mais entregas) — quando Cliente = LG ELETRONICS, resume por operação
+  // (OP FTL / OP LTL / OP LTL E / TRANSFERENCIA) conforme a coluna Mercadoria: entregas, peso e em aberto.
+  try{
+    const _lgBox = document.getElementById('top5LgOps');
+    // v49.49: com Cliente = LG, oculta título/lista de UFs e mostra apenas o resumo por operação
+    const _setUfCardLG = (on) => {
+      const _card = document.getElementById('cardTop5Ufs');
+      if(!_card) return;
+      const _t = _card.querySelector('.card-title');
+      const _s = document.getElementById('kTop5UfsBody');
+      if(_t) _t.style.display = on ? 'none' : '';
+      if(_s) _s.style.display = on ? 'none' : '';
+    };
+    // v49.54: com Cliente = LG ELETRONICS, troca de lugar o card "LG ELETRONICS — por operação" (cardTop5Ufs)
+    // com o card "Ocorrências" (cardOcorrenciasEntregas); nos demais casos restaura a ordem original.
+    const _swapLgCards = (on) => {
+      const _a = document.getElementById('cardOcorrenciasEntregas');
+      const _b = document.getElementById('cardTop5Ufs');
+      if(!_a || !_b || !_a.parentNode || !_b.parentNode) return;
+      if(!!window.__lgCardsSwapped === !!on) return;
+      const _ph = document.createComment('lg-swap');
+      _a.parentNode.insertBefore(_ph, _a);          // marca a posição de Ocorrências
+      _b.parentNode.insertBefore(_a, _b);           // Ocorrências vai para a posição do card UF/LG
+      _ph.parentNode.insertBefore(_b, _ph);         // card UF/LG vai para a posição de Ocorrências
+      _ph.parentNode.removeChild(_ph);
+      window.__lgCardsSwapped = !!on;
+    };
+    if(_lgBox){
+      if(f.cli === 'LG ELETRONICS'){
+        _swapLgCards(true);
+        const FTL = 'OP FTL (v6 12 22 45 60 90 100 110)';
+        const _opPorCod = {
+          '070':'OP LTL E','073':'OP LTL E',
+          '024':FTL,'022':FTL,'021':FTL,'023':FTL,'020':FTL,'012':FTL,'006':FTL,'005':FTL,'003':FTL,'004':FTL,'025':FTL,
+          '120':'TRANSFERENCIA','119':'TRANSFERENCIA',
+          '010':'OP LTL','156':'OP LTL','160':'OP LTL'
+        };
+        const _opOrdem = [FTL,'OP LTL','OP LTL E','TRANSFERENCIA'];
+        // v49.50: filtro Operação do card (mesmas opções do filtro Operação da dash, campo r.f)
+        const _gSel = document.getElementById('fOperacao');
+        let _opts = _gSel ? Array.from(_gSel.options).map(o => o.value).filter(v => v !== '') : [];
+        if(!_opts.length) _opts = ['BAIXA TCL','COMPLEMENTAR','CORTESIA','FECHADA','NORMAL','REVERSA'];
+        if(window.__lgOpFilter && _opts.indexOf(window.__lgOpFilter) < 0) window.__lgOpFilter = '';
+        // v49.51: o card ignora o filtro Operação GERAL (op:''), obedecendo só ao filtro do próprio card;
+        // os demais filtros (ano, mês, UF, cliente, unidade, ocorrência) continuam valendo normalmente.
+        window.__lgOpsRows = applyFilter(DATA, Object.assign({}, f, {op:''}));
+        const _drawLg = () => {
+          const _fOp = window.__lgOpFilter || '';
+          const _g = {}; _opOrdem.forEach(k => _g[k] = {n:0, pr:0, p:0, ab:0});
+          for(const r of (window.__lgOpsRows || [])){
+            if(_fOp && r.f !== _fOp) continue;
+            const m = /^\s*0*(\d{1,3})(?!\d)/.exec(String(r.mgd||''));
+            const cod = m ? m[1].padStart(3,'0') : '';
+            const op = _opPorCod[cod];
+            if(!op) continue;
+            const o = _g[op];
+            o.n++;
+            o.pr += (r.pr || 0);
+            o.p  += (r.p  || 0);
+            if(r.c === 'EM ABERTO') o.ab++;
+          }
+          _lgBox.innerHTML =
+            '<div class="lg-ops-head">' +
+              '<div class="lg-ops-title">LG ELETRONICS — por operação</div>' +
+              '<div class="lg-ops-filter"><label for="lgOpFilter">Operação</label>' +
+                '<select id="lgOpFilter"><option value="">Todas</option>' +
+                _opts.map(v => '<option value="'+v+'"'+(v===_fOp?' selected':'')+'>'+v+'</option>').join('') +
+                '</select></div>' +
+            '</div>' +
+            '<table><thead><tr><th>Operação</th><th>Entregas</th><th>Peso</th><th>Em aberto</th></tr></thead><tbody>' +
+            _opOrdem.map(k => {
+              const o = _g[k];
+              const kg = o.pr; // v49.53: somente coluna "Peso Real em Kg" do arquivo importado, exibida em kg
+              return '<tr><td>'+k+'</td><td>'+fmt(o.n)+'</td><td>'+Number(kg||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2})+' kg</td><td class="ab'+(o.ab?'':' zero')+'">'+fmt(o.ab)+'</td></tr>';
+            }).join('') +
+            '</tbody>' +
+            (function(){
+              // Total geral (soma das operações exibidas): entregas e em aberto
+              let tn=0, tab=0;
+              _opOrdem.forEach(k => { tn += _g[k].n; tab += _g[k].ab; });
+              return '<tfoot><tr class="lg-total"><td>Total</td><td>'+fmt(tn)+'</td><td></td><td class="ab'+(tab?'':' zero')+'">'+fmt(tab)+'</td></tr></tfoot>';
+            })() +
+            '</table>';
+        };
+        window.__lgOpsRedraw = _drawLg;
+        if(!_lgBox.__lgBound){
+          _lgBox.__lgBound = true;
+          _lgBox.addEventListener('change', (ev) => {
+            if(ev.target && ev.target.id === 'lgOpFilter'){
+              window.__lgOpFilter = ev.target.value;
+              if(window.__lgOpsRedraw) window.__lgOpsRedraw();
+            }
+          });
+        }
+        _drawLg();
+        _lgBox.style.display = '';
+        _lgBox.style.marginTop = '0'; _lgBox.style.paddingTop = '0'; _lgBox.style.borderTop = 'none';
+        _setUfCardLG(true);
+      } else {
+        window.__lgOpFilter = '';
+        _swapLgCards(false);
+        _lgBox.style.display = 'none';
+        _lgBox.innerHTML = '';
+        _setUfCardLG(false);
+      }
+    }
+  }catch(_e){ console.warn('top5LgOps', _e); }
+
   // Unidades com mais entregas (Top 10) -> dentro do card (com porcentagem do total)
   // v49.13: uniAgg vem do LOOP ÚNICO acima
   const uniTop10 = sortAgg(uniAgg).slice(0,10);
@@ -4976,11 +5109,14 @@ function render(){
   const efetivoNoPrazo = noPrazoStrict + antecip + justificado;
   const pctPrazo = totalPrazoBase ? (efetivoNoPrazo / totalPrazoBase * 100) : 0;
   getEl('gaugePct').textContent = pctPrazo.toFixed(1).replace('.',',')+'%';
-  makeGauge('gaugeChart', pctPrazo, 97);
-  // Atualiza status da meta (97%)
+  // v49.52: meta do Nível de Serviço = 98% quando Cliente = LG ELETRONICS; demais casos 97%
+  const META = (f.cli === 'LG ELETRONICS') ? 98 : 97;
+  const _pillMeta = document.getElementById('gaugeMetaPill');
+  if(_pillMeta) _pillMeta.textContent = 'Meta: ' + META + '%';
+  makeGauge('gaugeChart', pctPrazo, META);
+  // Atualiza status da meta
   const metaEl = getEl('gaugeMetaStatus');
   if(metaEl){
-    const META = 97;
     if(!totalPrazoBase){
       metaEl.className = 'meta-status';
       metaEl.textContent = '—';
@@ -6915,6 +7051,7 @@ document.getElementById('clearFiltersBtn').addEventListener('click', ()=>{
   // v49.13: limpa também os filtros internos do card Top 10 Usuários e a sessão
   const tuf = document.getElementById('topUsrFilter');    if(tuf) tuf.value = '';
   const tum = document.getElementById('topUsrMesFilter'); if(tum) tum.value = '';
+  window.__lgOpFilter = ''; // v49.50: limpa o filtro Operação do card LG
   try { sessionStorage.removeItem('rodobras_f_entregas'); } catch(_){}
   refreshFilterOptions();
   render();
@@ -6960,14 +7097,14 @@ function exportExcel(){
 
     /* ===== Sheet 1: Entregas (linhas detalhadas) =====
        v49.32: removidas Unidade Receptora, Peso Real (kg), Unidade Emissão,
-       Frete Peso (R$) e Login Emissor; adicionadas Data de Emissão, Cidade,
+       Frete Peso (R$) e Login Emissor; adicionadas Data de Emissão, Cidade, Peso Real em Kg (antes da Cubagem),
        TROCA, FALTA, EMBALAGEM e AVARIA. */
     const headerMap = [
       ['Cliente','a'],['Status Entrega','c'],['Dias Atraso','d'],['Situação Prazo','e'],
-      ['Operação','f'],['Tipo Baixa','h'],['Entrega Antecipada','i'],['Legenda Ocorrência','fk'],
+      ['Operação','f'],['Mercadoria','mgd'],['Tipo Baixa','h'],['Entrega Antecipada','i'],['Legenda Ocorrência','fk'],
       ['Justificado','fm'],
       ['CTRC','k'],['Romaneio','l'],['Unidade','n'],
-      ['UF','m'],['Cidade','ci'],['Cubagem (m³)','s'],['Volumes','v'],
+      ['UF','m'],['Cidade','ci'],['Peso Real em Kg','pr'],['Cubagem (m³)','s'],['Volumes','v'],
       ['Valor do Frete (R$)','ce'],
       ['Data de Emissão','dem'],['Previsão de Entrega','et'],['Dia Emissão','fb'],['Dia Entrega','fc'],['Mês','fd'],
       ['Agendamento','fq'],['Atraso Baixa','fp'],
@@ -6980,6 +7117,8 @@ function exportExcel(){
       aoa.push(headerMap.map(([_,k])=>{
         const v = r[k];
         if(SIM_KEYS_EX.has(k)) return (Number(v)||0) === 1 ? 'SIM' : '';
+        // Atraso Baixa: exibir somente quando Status Entrega = ENTREGUE
+        if(k === 'fp' && String(r.c||'').trim().toUpperCase() !== 'ENTREGUE') return '';
         return v !== undefined && v !== null ? v : '';
       }));
     });
