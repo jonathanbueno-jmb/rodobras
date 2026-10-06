@@ -5985,7 +5985,9 @@ function _tendCubo_(){
   const hoje = _tendHoje();
   const sig = hoje+'|'+(DATA?DATA.length:0)+'|'+(_tendLS(LAST_IMPORT_KEY)||'');
   if(_tendCubo && sig===_tendCuboSig) return _tendCubo;
-  const a = {}, d = {};
+  const a = {}, d = {}, p = {};   // p = cubos por DATA DE ENTREGA (NS do dia calculado de cada data, não só de hoje)
+  const _lim = new Date(); _lim.setDate(_lim.getDate()-(TEND_DIAS_GUARDADOS+10));
+  const limIso = _lim.getFullYear()+'-'+String(_lim.getMonth()+1).padStart(2,'0')+'-'+String(_lim.getDate()).padStart(2,'0');
   (DATA||[]).forEach(r=>{
     if(r.c!=='ENTREGUE') return;
     let ok=0, base=0;
@@ -5993,9 +5995,11 @@ function _tendCubo_(){
     if(r.fm==='JUSTIFICADO') ok++;
     const k=[yearFromEt(r.et)||'', r.fd||'', r.m||'', r.a||'', r.n||'', r.fk==null?'':r.fk, r.f||''].join('|');
     const o = a[k] || (a[k]=[0,0]); o[0]+=ok; o[1]+=base;
-    if(_tendDataEntrega(r)===hoje){ const q = d[k] || (d[k]=[0,0]); q[0]+=ok; q[1]+=base; }
+    const de = _tendDataEntrega(r);
+    if(de && de>=limIso){ const pc = p[de] || (p[de]={}); const q = pc[k] || (pc[k]=[0,0]); q[0]+=ok; q[1]+=base; }
   });
-  _tendCubo = {a:a, d:d}; _tendCuboSig = sig; return _tendCubo;
+  if(p[hoje]) Object.assign(d, p[hoje]);
+  _tendCubo = {a:a, d:d, p:p}; _tendCuboSig = sig; return _tendCubo;
 }
 // Carrega o histórico 1x do IndexedDB. Nunca rejeita.
 function _tendCarregar(){
@@ -6055,12 +6059,17 @@ async function renderTendenciaHistorico(){
     const h = await _tendCarregar();
     const f = currentFilter();
     _tendSalvarHoje(h);
+    const _cuboVivo = _tendCubo_();   // NS do dia recalculado a partir da data de entrega de cada dia mostrado
     // v49.35: dois valores por dia gravado — acumulado (= NS da tela) e NS só do dia. Nada é reconstruído.
     const hist = Object.keys(h).sort().map(d=>{
       const e = h[d] || {};
       const cA = e.a ? e.a : e;                 // registro antigo: o próprio objeto é o cubo acumulado
       const cD = e.a ? e.d : null;              // registro antigo não tem NS do dia
-      return { dia:d, ns:_tendNSCubo(cA, f), nsDia: cD ? _tendNSCubo(cD, f) : null };
+      // prioridade: NS do dia recalculado dos dados atuais (data de entrega = dia); fallback: valor gravado
+      const cV = _cuboVivo && _cuboVivo.p ? _cuboVivo.p[d] : null;
+      let nsDia = cV ? _tendNSCubo(cV, f) : null;
+      if(nsDia===null && cD) nsDia = _tendNSCubo(cD, f);
+      return { dia:d, ns:_tendNSCubo(cA, f), nsDia: nsDia };
     }).filter(x=>x.ns!==null || x.nsDia!==null).slice(-7);
     if(info){
       info.textContent = hist.length===0 ? 'Ainda sem registros diários para o filtro atual — o histórico é gerado dia a dia.'
