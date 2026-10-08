@@ -895,6 +895,8 @@
   }
   .plan-table tbody tr:hover td{ background:#f8fafc; }
   .plan-table tbody tr.editing td{ background:#fffbeb; }
+  .plan-ro{ white-space:pre-wrap; word-break:break-word; font-size:12.5px; line-height:1.45; }
+  .plan-empty{ text-align:center; padding:28px 12px; color:#64748b; font-size:13.5px; }
   .plan-cell-edit{
     width:100%; min-height:32px; padding:6px 8px; border:1px solid #e2e8f0;
     border-radius:6px; background:#fff; color:#0f172a; font-size:12.5px;
@@ -3478,30 +3480,13 @@ window.rodoLogoCliente = function(nome){
     <div class="plan-header-left">
       <h2 class="plan-title">
         <span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><polyline points="9 16 11 18 15 14"></polyline></svg></span>
-        <span id="planTitleText" contenteditable="true" spellcheck="false">PLANEJAMENTO DA OPERAÇÃO</span><!--v49.4-->
+        <span id="planTitleText">PLANEJAMENTO DA OPERAÇÃO</span><!--v49.4-->
       </h2>
     </div>
     <div class="plan-header-right">
-      <button class="plan-btn primary" id="planAddBtn" title="Adicionar nova linha">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Nova Ação
-      </button>
-      <button class="plan-btn" id="planImportBtn" title="Importar plano de ação de um arquivo Excel (XLSX)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-        Importar
-      </button>
-      <input type="file" id="planImportFile" accept=".xlsx,.xls,.xlsb,.csv" style="display:none">
       <button class="plan-btn" id="planExportBtn" title="Exportar plano para Excel (XLSX)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         Exportar XLSX
-      </button>
-      <button class="plan-btn" id="planSaveBtn" title="Salvar alterações">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-        Salvar
-      </button>
-      <button class="plan-btn danger" id="planResetBtn" title="Restaurar plano original">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-        Restaurar
       </button>
     </div>
   </div>
@@ -3589,7 +3574,6 @@ window.rodoLogoCliente = function(nome){
             <th style="min-width:200px;">Considerações</th>
             <th style="width:110px;">Status</th>
             <th style="min-width:160px;">Meta</th>
-            <th style="width:90px;">Ações</th>
           </tr>
         </thead>
         <tbody id="planTbody"></tbody>
@@ -4193,6 +4177,8 @@ let DATA_AVALIACAO = [];
 let DATA_CUSTO = [];
 const COLETA_KEY = 'dataset_coleta_v1';
 const AVAL_KEY = 'dataset_avaliacao_v1';
+let DATA_PLANO = { titulo:'', linhas:[] };   // aba "Plano de Ações" do arquivo importador (tela Planejamento)
+const PLANO_KEY = 'dataset_plano_v1';
 const CUSTO_KEY = 'dataset_custo_v3'; // v49.20: bump p/ reimportar a aba custos com o evento 5101
 
 function decodeEmbedded(){
@@ -4234,6 +4220,10 @@ async function loadInitialData(){
   try { const c = await dbGet(COLETA_KEY); if(c && Array.isArray(c)) DATA_COLETA = c; } catch(_){}
   try { const a = await dbGet(AVAL_KEY); if(a && Array.isArray(a)) DATA_AVALIACAO = a; } catch(_){}
   try { const u = await dbGet(CUSTO_KEY); if(u && Array.isArray(u)) DATA_CUSTO = u; } catch(_){}
+  // Planejamento: só o que veio da aba "Plano de Ações" do importador; remove o que ficou salvo antes no navegador
+  try { localStorage.removeItem('rodobras_plan_pap_v28'); localStorage.removeItem('rodobras_plan_title_v28'); } catch(_){}
+  try { const pl = await dbGet(PLANO_KEY); if(pl && Array.isArray(pl.linhas)) DATA_PLANO = pl; } catch(_){}
+  try { if(window.renderPlanejamento) window.renderPlanejamento(); } catch(_){}
   hideOverlay();
   populateFilters();
   restoreEntregasFilters(); // v49.13: restaura seleção anterior (sessionStorage)
@@ -6667,6 +6657,67 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
         await dbSet(CUSTO_KEY, DATA_CUSTO);
       }
     } catch(err){ console.error('Erro aba custos:', err); }
+
+    // ---- Processa aba PLANO DE AÇÕES (alimenta a tela Planejamento; substitui o que havia) ----
+    try {
+      const _nS = (n) => String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+      const pSheet = wb.SheetNames.find(n => ['plano de acoes','plano de acao','plano acoes'].includes(_nS(n)));
+      if(pSheet){
+        const pArr = XLSX.utils.sheet_to_json(wb.Sheets[pSheet], { header:1, defval:'', raw:true, blankrows:false });
+        const _up = (c) => String(c==null?'':c).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+        const hi = pArr.findIndex(r => (r||[]).some(c => _up(c).includes('DESVIO')));
+        if(hi < 0){
+          console.error('Aba Plano de Ações sem coluna DESVIO');
+          toast('Aba "Plano de Ações" encontrada, mas sem a coluna DESVIO no cabeçalho.', 'error');
+        } else {
+          const hdr = pArr[hi].map(_up);
+          const col = (...names) => hdr.findIndex(h => names.some(n => h === n || h.includes(n)));
+          const C = {
+            data: hdr.findIndex(h => h === 'DATA'), desvio: col('DESVIO'), causa: col('CAUSA'),
+            acao: col('O QUE FAZER','ACAO'), quem: col('QUEM'),
+            inicio: col('PREVISTO INICIO','INICIO'), termino: col('PREVISTO TERMINO','TERMINO'),
+            progresso: col('PROGRESSO'), consideracoes: col('CONSIDERACOES'), status: col('STATUS'), meta: col('META')
+          };
+          const two = (n) => String(n).padStart(2,'0');
+          const toISO = (v) => {
+            if(v === null || v === undefined || v === '') return '';
+            if(v instanceof Date) return isNaN(v.getTime()) ? '' : v.getFullYear()+'-'+two(v.getMonth()+1)+'-'+two(v.getDate());
+            if(typeof v === 'number' && isFinite(v)){
+              const d = XLSX.SSF && XLSX.SSF.parse_date_code ? XLSX.SSF.parse_date_code(v) : null;
+              return d ? String(d.y).padStart(4,'0')+'-'+two(d.m)+'-'+two(d.d) : '';
+            }
+            const t = String(v).trim();
+            let m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m) return m[3]+'-'+two(m[2])+'-'+two(m[1]);
+            m = t.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[1]+'-'+m[2]+'-'+m[3];
+            return '';
+          };
+          const txt = (r, i) => (i >= 0 && r[i] !== null && r[i] !== undefined) ? String(r[i]).trim() : '';
+          const ST = { 'CONCLUIDO':'C','CONCLUIDA':'C','EM DESENVOLVIMENTO':'ED','EM ANDAMENTO':'EA','NAO INICIADO':'NI','NAO INICIADA':'NI' };
+          let titulo = '';
+          for(let i=0;i<hi && !titulo;i++){ const c = (pArr[i]||[]).find(v => String(v||'').trim()); if(c) titulo = String(c).trim(); }
+          const linhas = [];
+          for(let i=hi+1;i<pArr.length;i++){
+            const r = pArr[i]; if(!r || !r.some(v => v !== '' && v !== null && v !== undefined)) continue;
+            const desvio = txt(r,C.desvio), causa = txt(r,C.causa), acao = txt(r,C.acao);
+            if(!desvio && !causa && !acao) continue;
+            let prog = C.progresso >= 0 ? r[C.progresso] : 0;
+            if(typeof prog === 'string') prog = parseFloat(prog.replace('%','').replace(',','.'));
+            else if(typeof prog === 'number' && prog > 0 && prog <= 1) prog = prog*100;   // veio como fração (formato %)
+            let st = _up(C.status >= 0 ? r[C.status] : '');
+            st = ST[st] || st || 'NI';
+            linhas.push({
+              data: C.data >= 0 ? toISO(r[C.data]) : '', desvio, causa, acao, quem: txt(r,C.quem),
+              inicio: C.inicio >= 0 ? toISO(r[C.inicio]) : '', termino: C.termino >= 0 ? toISO(r[C.termino]) : '',
+              progresso: Math.max(0, Math.min(100, Math.round(Number(prog)||0))),
+              consideracoes: txt(r,C.consideracoes), status: st, meta: txt(r,C.meta)
+            });
+          }
+          DATA_PLANO = { titulo: titulo, linhas: linhas };
+          await dbSet(PLANO_KEY, DATA_PLANO);
+          try { if(window.renderPlanejamento) window.renderPlanejamento(); } catch(_){}
+        }
+      }
+    } catch(err){ console.error('Erro aba Plano de Ações:', err); }
 
     let sheetName = wb.SheetNames.find(n => n.toLowerCase().replace(/[óô]/g,'o') === 'relatorio');
     if(!sheetName) sheetName = wb.SheetNames[0];
@@ -12355,116 +12406,31 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
 </script>
 
 <!-- ============================================================== -->
-<!-- v28: SCRIPT DA TELA PLANEJAMENTO — PAP EDITÁVEL                 -->
+<!-- v28: SCRIPT DA TELA PLANEJAMENTO — somente leitura: dados vêm da aba "Plano de Ações" do arquivo importador -->
 <!-- ============================================================== -->
 <script>
 (function(){
   'use strict';
-
-  // Estrutura padrão pré-carregada com os 11 itens da planilha ROD-FOR-11
-  const PLAN_DEFAULT = [
-    { n:1,  desvio:'Informação de romaneio no PR, SC e RS, perfomance atual das unidade da regional é de *92,06%*.',
-            causa:'Unidades parceiras com multi-tranportadoras, dificulta a emissão do romaneio.',
-            acao:'Uso da Oc. 049.', quem:'Maicon / Wagner / Everton',
-            inicio:'2026-07-01', termino:'2026-08-30', progresso:50,
-            consideracoes:'Envio de boletim semanal de seus nível de serviço.', status:'ED', meta:'Para 60 dias = 96,00%' },
-    { n:2,  desvio:'Performance atual das unidade da regional PR, SC e RS é de *89,34%*.',
-            causa:'Unidades parceiras com multi-tranportadoras, dificulta a baixa em cada domínio do app mobile.',
-            acao:'Solicitamos melhoria ao SSW, para que quando a unidade que trabalha com várias transportadoras utilizando o mesmo SSW, sem necessidade de entrar no APP, para que desenvolver um domínio único "master".',
-            quem:'Pacheco / Wagner (T.I)', inicio:'2026-07-01', termino:'2026-07-30', progresso:10,
-            consideracoes:'Tratativa T.I.', status:'ED', meta:'Para 60 dias = 95,00%' },
-    { n:3,  desvio:'Efetividade de baixas on-time performance atual *92,02%*.',
-            causa:'Rotas itinerantes, interior III e fronteira, quarterizarção das entregas por parceiros.',
-            acao:'Desenvolver uma I.A pelo grupo do WhatsApp que a operação (motorista) envia o comprovante, atualiza a baixa de entrega.',
-            quem:'Maicon / Wagner (T.I)', inicio:'2026-07-01', termino:'2026-07-30', progresso:10,
-            consideracoes:'Tratativa T.I.', status:'ED', meta:'Para 60 dias = 95,00%' },
-    { n:4,  desvio:'Baixo índice de ocorrência 073 lançada, performance de *15,73%*.',
-            causa:'60% das entregas são antecipadas e sai para rota no mesmo dia.',
-            acao:'Montar material de instrução, mostrando que essa ferramenta diminui riscos de avarias, insucesso nas entregas e garante maior assertividade nas entregas.',
-            quem:'Maicon / Pacheco', inicio:'2026-07-01', termino:'2026-07-30', progresso:50,
-            consideracoes:'Envio de boletim semanal de seus nível de serviço.', status:'ED', meta:'Para 60 dias = 35,00%' },
-    { n:5,  desvio:'Indenizações.',
-            causa:'Manuseio, ocorrências, coletas/reversas, emissão de CT-e, transferências da reversa nas bases de devoluções.',
-            acao:'Estaremos desenvolvendo material de boas práticas e evidenciando o certo e o errado.',
-            quem:'Maicon / Pacheco', inicio:'2026-07-01', termino:'2026-07-15', progresso:50,
-            consideracoes:'Envio de boletim semanal de seus nível de serviço.', status:'ED', meta:'*' },
-    { n:6,  desvio:'Black Friday.',
-            causa:'Regional SC, RS e PR.',
-            acao:'Desenvolver unidades para essas regiões durante o período da Black.',
-            quem:'Wagner / Maicon / Everton / Pacheco', inicio:'2026-07-01', termino:'2026-07-15', progresso:50,
-            consideracoes:'*', status:'ED', meta:'*' },
-    { n:7,  desvio:'Contratos. Identificamos que 50% das unidades não têm contratos assinados.',
-            causa:'Regional SC, RS e PR.',
-            acao:'Iremos regularizar e revisar todos até o final do mês de julho.',
-            quem:'Wagner / Maicon / Everton / Pacheco', inicio:'2026-07-01', termino:'2026-07-31', progresso:50,
-            consideracoes:'*', status:'ED', meta:'*' },
-    { n:8,  desvio:'Informação.',
-            causa:'Clientes não recebem as informações da OC 073 e 046. Realizamos 10 testes com os clientes afirmaram não terem sido notificados.',
-            acao:'Nosso T.I Rodobras, verificar as configurações.',
-            quem:'Wagner (T.I) / Pacheco', inicio:'2026-07-01', termino:'2026-07-31', progresso:0,
-            consideracoes:'*', status:'NI', meta:'*' },
-    { n:9,  desvio:'CD POA.',
-            causa:'Retrabalho, custos de coletas e atrasos em transferências.',
-            acao:'100% do RS será pela filial POA a partir de 01/07. Obs.: já configurada com os nossos embarcadores coletas por UF. Cod. 5003133 (RS) / 5001929 (PR) / 5002836 (SC) / 5003024 (P.Ç. + RCL + 3 UF).',
-            quem:'Pacheco / Operação', inicio:'', termino:'', progresso:100,
-            consideracoes:'*', status:'C', meta:'*' },
-    { n:10, desvio:'Regional PR.',
-            causa:'LON / CAS / PAR / FBL.',
-            acao:'Unidades iniciando em 01/07.',
-            quem:'Pacheco / Everton', inicio:'', termino:'', progresso:100,
-            consideracoes:'*', status:'C', meta:'*' },
-    { n:11, desvio:'Indicadores.',
-            causa:'Melhorias nas informações.',
-            acao:'Concentração em único dashboard: indicadores de custo, performance, avaliação e reversa.',
-            quem:'Pacheco / Jonathan / Maicon', inicio:'', termino:'', progresso:100,
-            consideracoes:'Esses dados a partir de 01/07 serão compartilhados com todos da operação.', status:'C', meta:'*' }
-  ];
-
-  const STORAGE_KEY = 'rodobras_plan_pap_v28';
-  const TITLE_KEY   = 'rodobras_plan_title_v28';
-  let PLAN_DATA = [];
+  // Fonte única: DATA_PLANO, preenchido pelo importador (aba "Plano de Ações"). Esta tela não embute, não edita e não salva dados.
+  const TITLE_DEFAULT = 'PLANEJAMENTO DA OPERAÇÃO';
   let PLAN_FILTER = { status:'', quem:'', search:'' };
 
-  function loadPlan(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw){
-        const parsed = JSON.parse(raw);
-        if(Array.isArray(parsed) && parsed.length){ PLAN_DATA = parsed; return; }
-      }
-    }catch(_){ }
-    PLAN_DATA = JSON.parse(JSON.stringify(PLAN_DEFAULT));
-  }
-  function savePlan(silent){
-    try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(PLAN_DATA));
-      const tt = document.getElementById('planTitleText');
-      if(tt) localStorage.setItem(TITLE_KEY, tt.textContent.trim());
-      if(!silent) flashSaved();
-    }catch(e){ console.warn('savePlan err', e); }
-  }
-  function flashSaved(){
-    const btn = document.getElementById('planSaveBtn');
-    if(!btn) return;
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Salvo!';
-    btn.style.background = '#16a34a'; btn.style.borderColor = '#16a34a';
-    setTimeout(()=>{ btn.innerHTML = orig; btn.style.background=''; btn.style.borderColor=''; }, 1500);
-  }
+  const plano = () => (typeof DATA_PLANO !== 'undefined' && DATA_PLANO && Array.isArray(DATA_PLANO.linhas)) ? DATA_PLANO : { titulo:'', linhas:[] };
+  const rows  = () => plano().linhas;
 
   function escapeHtml(s){
     return String(s==null?'':s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
   }
-
-  function recalcNumbers(){
-    PLAN_DATA.forEach((r,i)=> r.n = i+1);
+  function fmtData(iso){
+    const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? m[3]+'/'+m[2]+'/'+m[1] : '';
   }
 
   function getFiltered(){
     const s = (PLAN_FILTER.status||'').trim();
     const q = (PLAN_FILTER.quem||'').trim();
     const t = (PLAN_FILTER.search||'').trim().toLowerCase();
-    return PLAN_DATA.filter(r=>{
+    return rows().filter(r=>{
       if(s && r.status !== s) return false;
       if(q && r.quem  !== q) return false;
       if(t){
@@ -12476,24 +12442,18 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
   }
 
   function renderKPIs(){
-    const total = PLAN_DATA.length;
-    const done  = PLAN_DATA.filter(r=>r.status==='C').length;
-    const ed    = PLAN_DATA.filter(r=>r.status==='ED').length;
-    const ni    = PLAN_DATA.filter(r=>r.status==='NI').length;
-    const avg   = total ? Math.round(PLAN_DATA.reduce((s,r)=>s+(Number(r.progresso)||0),0)/total) : 0;
+    const L = rows(), total = L.length;
+    const cnt = st => L.filter(r=>r.status===st).length;
+    const avg = total ? Math.round(L.reduce((s,r)=>s+(Number(r.progresso)||0),0)/total) : 0;
     const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent = v; };
-    set('planKpiTotal', total);
-    set('planKpiDone',  done);
-    set('planKpiED',    ed);
-    set('planKpiNI',    ni);
-    set('planKpiAvg',   avg + '%');
+    set('planKpiTotal', total); set('planKpiDone', cnt('C')); set('planKpiED', cnt('ED')); set('planKpiNI', cnt('NI')); set('planKpiAvg', avg + '%');
   }
 
   function populateQuemFilter(){
     const sel = document.getElementById('planFilterQuem');
     if(!sel) return;
     const cur = sel.value;
-    const list = Array.from(new Set(PLAN_DATA.map(r=>r.quem).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    const list = Array.from(new Set(rows().map(r=>r.quem).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'pt-BR'));
     sel.innerHTML = '<option value="">Todos</option>' + list.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
     if(cur && list.includes(cur)) sel.value = cur;
   }
@@ -12501,253 +12461,63 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
   function renderTable(){
     const tbody = document.getElementById('planTbody');
     if(!tbody) return;
-    const list = getFiltered();
-    tbody.innerHTML = list.map(row => {
-      const idx = PLAN_DATA.indexOf(row); // índice no array original (para edição)
-      const prog = Math.max(0, Math.min(100, Number(row.progresso)||0));
-      const stCls = 'st-' + (row.status || 'NI');
-      return `
-        <tr data-idx="${idx}">
-          <td><span class="plan-num">${row.n}</span></td>
-          <td><input class="plan-cell-edit" data-field="data" type="date" value="${escapeHtml(row.data||'')}"/></td>
-          <td><textarea class="plan-cell-edit" data-field="desvio" rows="3">${escapeHtml(row.desvio)}</textarea></td>
-          <td><textarea class="plan-cell-edit" data-field="causa" rows="3">${escapeHtml(row.causa)}</textarea></td>
-          <td><textarea class="plan-cell-edit" data-field="acao" rows="3">${escapeHtml(row.acao)}</textarea></td>
-          <td><input class="plan-cell-edit" data-field="quem" type="text" value="${escapeHtml(row.quem)}"/></td>
-          <td><input class="plan-cell-edit" data-field="inicio" type="date" value="${escapeHtml(row.inicio||'')}"/></td>
-          <td><input class="plan-cell-edit" data-field="termino" type="date" value="${escapeHtml(row.termino||'')}"/></td>
+    const all = rows(), list = getFiltered();
+    if(!all.length){
+      tbody.innerHTML = '<tr><td colspan="12" class="plan-empty">Nenhum plano de ação importado. Importe o arquivo que contém a aba <b>Plano de Ações</b> pelo botão de importação.</td></tr>';
+    } else {
+      tbody.innerHTML = list.map(row => {
+        const prog = Math.max(0, Math.min(100, Number(row.progresso)||0));
+        const st = row.status || 'NI';
+        return `
+        <tr>
+          <td><span class="plan-num">${all.indexOf(row)+1}</span></td>
+          <td class="plan-ro">${escapeHtml(fmtData(row.data))}</td>
+          <td class="plan-ro">${escapeHtml(row.desvio)}</td>
+          <td class="plan-ro">${escapeHtml(row.causa)}</td>
+          <td class="plan-ro">${escapeHtml(row.acao)}</td>
+          <td class="plan-ro">${escapeHtml(row.quem)}</td>
+          <td class="plan-ro">${escapeHtml(fmtData(row.inicio))}</td>
+          <td class="plan-ro">${escapeHtml(fmtData(row.termino))}</td>
           <td class="plan-progress-cell">
-            <input class="plan-progress-input" data-field="progresso" type="number" min="0" max="100" step="5" value="${prog}"/>
-            <span style="font-size:11px;color:#64748b;margin-left:4px;">%</span>
+            <span class="plan-ro"><b>${prog}%</b></span>
             <div class="plan-progress-bar"><div class="plan-progress-fill" style="width:${prog}%"></div></div>
           </td>
-          <td><textarea class="plan-cell-edit" data-field="consideracoes" rows="3">${escapeHtml(row.consideracoes)}</textarea></td>
-          <td>
-            <select class="plan-status-select ${stCls}" data-field="status">
-              <option value="NI" ${row.status==='NI'?'selected':''}>NI</option>
-              <option value="ED" ${row.status==='ED'?'selected':''}>ED</option>
-              <option value="EA" ${row.status==='EA'?'selected':''}>EA</option>
-              <option value="C"  ${row.status==='C' ?'selected':''}>C</option>
-            </select>
-          </td>
-          <td><input class="plan-cell-edit" data-field="meta" type="text" value="${escapeHtml(row.meta)}"/></td>
-          <td>
-            <div class="plan-row-actions">
-              <button class="plan-icon-btn dup" data-act="dup" title="Duplicar ação">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              </button>
-              <button class="plan-icon-btn del" data-act="del" title="Excluir ação">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-              </button>
-            </div>
-          </td>
+          <td class="plan-ro">${escapeHtml(row.consideracoes)}</td>
+          <td><span class="plan-status-pill st-${escapeHtml(st)}">${escapeHtml(st)}</span></td>
+          <td class="plan-ro">${escapeHtml(row.meta)}</td>
         </tr>`;
-    }).join('');
+      }).join('');
+    }
     const info = document.getElementById('planTableFooterInfo');
-    if(info) info.textContent = `${list.length} ação(ões) exibida(s) • ${PLAN_DATA.length} no total`;
-    bindRowEvents();
+    if(info) info.textContent = `${list.length} ação(ões) exibida(s) • ${all.length} no total`;
   }
 
-  function bindRowEvents(){
-    const tbody = document.getElementById('planTbody');
-    if(!tbody) return;
-
-    tbody.querySelectorAll('[data-field]').forEach(el=>{
-      const handler = (e)=>{
-        const tr = el.closest('tr'); if(!tr) return;
-        const idx = Number(tr.getAttribute('data-idx'));
-        if(isNaN(idx) || !PLAN_DATA[idx]) return;
-        const f = el.getAttribute('data-field');
-        let v = el.value;
-        if(f === 'progresso'){
-          v = Math.max(0, Math.min(100, Number(v)||0));
-          el.value = v;
-          const fill = tr.querySelector('.plan-progress-fill');
-          if(fill) fill.style.width = v + '%';
-        }
-        if(f === 'status'){
-          el.classList.remove('st-NI','st-ED','st-EA','st-C');
-          el.classList.add('st-' + v);
-          // Se concluir, joga progresso para 100 automaticamente
-          if(v === 'C'){
-            PLAN_DATA[idx].progresso = 100;
-            const pi = tr.querySelector('[data-field="progresso"]');
-            const pf = tr.querySelector('.plan-progress-fill');
-            if(pi) pi.value = 100;
-            if(pf) pf.style.width = '100%';
-          }
-        }
-        PLAN_DATA[idx][f] = v;
-        tr.classList.add('editing');
-        // Debounce de salvamento
-        clearTimeout(window.__planSaveT);
-        window.__planSaveT = setTimeout(()=>{
-          savePlan(true);
-          renderKPIs();
-          populateQuemFilter();
-          tr.classList.remove('editing');
-        }, 450);
-      };
-      el.addEventListener('input',  handler);
-      el.addEventListener('change', handler);
-    });
-
-    tbody.querySelectorAll('[data-act]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const tr = btn.closest('tr'); if(!tr) return;
-        const idx = Number(tr.getAttribute('data-idx'));
-        if(isNaN(idx)) return;
-        const act = btn.getAttribute('data-act');
-        if(act === 'del'){
-          if(!confirm('Excluir esta ação do plano?')) return;
-          PLAN_DATA.splice(idx, 1);
-          recalcNumbers();
-          savePlan(true); renderKPIs(); populateQuemFilter(); renderTable();
-        } else if(act === 'dup'){
-          const copy = JSON.parse(JSON.stringify(PLAN_DATA[idx]));
-          PLAN_DATA.splice(idx+1, 0, copy);
-          recalcNumbers();
-          savePlan(true); renderKPIs(); populateQuemFilter(); renderTable();
-        }
-      });
-    });
-  }
-
-  function addNewRow(){
-    PLAN_DATA.push({
-      n: PLAN_DATA.length + 1,
-      data: new Date().toISOString().slice(0,10), // v49.26: data de inserção do desvio
-      desvio:'', causa:'', acao:'', quem:'',
-      inicio:'', termino:'', progresso:0,
-      consideracoes:'', status:'NI', meta:''
-    });
-    savePlan(true); renderKPIs(); populateQuemFilter(); renderTable();
-    // scroll para o final
-    const wrap = document.querySelector('.plan-table-wrap');
-    if(wrap) wrap.scrollTop = wrap.scrollHeight;
-  }
-
-  // Exportação XLSX usando a biblioteca SheetJS já carregada na página
+  // Exporta o que está na tela (mesmo layout que o importador lê da aba "Plano de Ações")
   function exportXLSX(){
     if(typeof XLSX === 'undefined'){ alert('Biblioteca XLSX não carregada.'); return; }
-    const titleText = (document.getElementById('planTitleText')?.textContent || 'PLANEJAMENTO DA OPERAÇÃO').trim();
-    const header = ['Nº','DATA','DESVIO','CAUSA','O QUE FAZER','QUEM','PREVISTO INÍCIO','PREVISTO TÉRMINO','PROGRESSO','CONSIDERAÇÕES','STATUS','META']; // v49.31: coluna DATA
-    const aoa = [];
-    aoa.push([titleText]);
-    aoa.push([]);
-    aoa.push(header);
-    PLAN_DATA.forEach(r=>{
-      aoa.push([
-        r.n,
-        r.data||'', // v49.31: data de inserção do desvio
-        r.desvio||'', r.causa||'', r.acao||'', r.quem||'',
-        r.inicio||'', r.termino||'',
-        ((Number(r.progresso)||0)/100),
-        r.consideracoes||'', r.status||'', r.meta||''
-      ]);
+    if(!rows().length){ alert('Não há plano de ação importado para exportar.'); return; }
+    const titleText = (document.getElementById('planTitleText')?.textContent || TITLE_DEFAULT).trim();
+    const aoa = [[titleText], [], ['Nº','DATA','DESVIO','CAUSA','O QUE FAZER','QUEM','PREVISTO INÍCIO','PREVISTO TÉRMINO','PROGRESSO','CONSIDERAÇÕES','STATUS','META']];
+    rows().forEach((r,i)=>{
+      aoa.push([ i+1, fmtData(r.data), r.desvio||'', r.causa||'', r.acao||'', r.quem||'', fmtData(r.inicio), fmtData(r.termino),
+                 (Number(r.progresso)||0)/100, r.consideracoes||'', r.status||'', r.meta||'' ]);
     });
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    // Larguras de coluna
-    ws['!cols'] = [{wch:5},{wch:12},{wch:42},{wch:42},{wch:48},{wch:24},{wch:14},{wch:14},{wch:12},{wch:36},{wch:8},{wch:24}]; // v49.31: +coluna DATA
-    // Merge do título na linha 1 (A1:K1)
-    ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:11} }]; // v49.31: 12 colunas (com DATA)
-    // Formato % para coluna PROGRESSO (índice 7) começando da linha 4
-    for(let i=0;i<PLAN_DATA.length;i++){
-      const cellRef = XLSX.utils.encode_cell({r:3+i, c:8}); // v49.31: PROGRESSO agora é a coluna de índice 8 (após DATA)
-      if(ws[cellRef]) ws[cellRef].z = '0%';
+    ws['!cols'] = [{wch:5},{wch:12},{wch:42},{wch:42},{wch:48},{wch:24},{wch:14},{wch:14},{wch:12},{wch:36},{wch:8},{wch:24}];
+    ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:11} }];
+    for(let i=0;i<rows().length;i++){
+      const ref = XLSX.utils.encode_cell({r:3+i, c:8});
+      if(ws[ref]) ws[ref].z = '0%';
     }
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Plano de Ações');
-    const stamp = new Date().toISOString().slice(0,10);
-    XLSX.writeFile(wb, `Plano_de_Acoes_Rodobras_${stamp}.xlsx`);
+    XLSX.writeFile(wb, `Plano_de_Acoes_Rodobras_${new Date().toISOString().slice(0,10)}.xlsx`);
   }
 
-
-  // v49.31: Importa um plano de ação de arquivo Excel — mesmas colunas do export
-  // (Nº, DATA, DESVIO, CAUSA, O QUE FAZER, QUEM, PREVISTO INÍCIO, PREVISTO TÉRMINO,
-  //  PROGRESSO, CONSIDERAÇÕES, STATUS, META). Linhas importadas são ACRESCENTADAS
-  //  ao plano atual. Datas em DD/MM/AAAA ou AAAA-MM-DD são convertidas p/ o input date.
-  function _toISODatePlan(v){
-    if(v === null || v === undefined || v === '') return '';
-    if(typeof v === 'number' && isFinite(v)){ // serial do Excel
-      const d = XLSX && XLSX.SSF && XLSX.SSF.parse_date_code ? XLSX.SSF.parse_date_code(v) : null;
-      if(d) return String(d.y).padStart(4,'0')+'-'+String(d.m).padStart(2,'0')+'-'+String(d.d).padStart(2,'0');
-      return '';
-    }
-    const s = String(v).trim();
-    let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-    if(m) return m[3]+'-'+m[2]+'-'+m[1];
-    m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if(m) return m[1]+'-'+m[2]+'-'+m[3];
-    return '';
-  }
-  function importXLSX(file){
-    if(typeof XLSX === 'undefined'){ alert('Biblioteca XLSX não carregada.'); return; }
-    const reader = new FileReader();
-    reader.onload = function(ev){
-      try{
-        const wb  = XLSX.read(new Uint8Array(ev.target.result), { type:'array' });
-        const ws  = wb.Sheets[wb.SheetNames[0]];
-        const aoa = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', raw:true });
-        const hi  = aoa.findIndex(r => (r||[]).some(c => String(c||'').toUpperCase().includes('DESVIO')));
-        if(hi < 0){ alert('Não encontrei o cabeçalho do plano (coluna DESVIO) no arquivo.'); return; }
-        const hdr = aoa[hi].map(c => String(c||'').toUpperCase().trim());
-        const col = (...names) => hdr.findIndex(h => names.some(n => h === n || h.includes(n)));
-        const C = {
-          data:  col('DATA'),
-          desvio: col('DESVIO'),
-          causa: col('CAUSA'),
-          acao:  col('O QUE FAZER','ACAO','AÇÃO'),
-          quem:  col('QUEM'),
-          inicio: col('PREVISTO INÍCIO','PREVISTO INICIO','INÍCIO','INICIO'),
-          termino: col('PREVISTO TÉRMINO','PREVISTO TERMINO','TÉRMINO','TERMINO'),
-          progresso: col('PROGRESSO'),
-          consideracoes: col('CONSIDERAÇÕES','CONSIDERACOES'),
-          status: col('STATUS'),
-          meta:  col('META')
-        };
-        if(C.desvio < 0){ alert('Coluna DESVIO não encontrada no cabeçalho.'); return; }
-        let added = 0;
-        for(let i = hi+1; i < aoa.length; i++){
-          const r = aoa[i];
-          if(!r || !r.some(v => v !== '' && v !== null)) continue;
-          let prog = r[C.progresso];
-          if(typeof prog === 'number' && prog > 0 && prog <= 1) prog = Math.round(prog*100); // veio como fração (formato %)
-          PLAN_DATA.push({
-            n: PLAN_DATA.length + 1,
-            data:  C.data >= 0 ? (_toISODatePlan(r[C.data]) || new Date().toISOString().slice(0,10)) : new Date().toISOString().slice(0,10),
-            desvio: C.desvio >= 0 ? String(r[C.desvio]||'') : '',
-            causa:  C.causa  >= 0 ? String(r[C.causa] ||'') : '',
-            acao:   C.acao   >= 0 ? String(r[C.acao]  ||'') : '',
-            quem:   C.quem   >= 0 ? String(r[C.quem]  ||'') : '',
-            inicio:   C.inicio   >= 0 ? _toISODatePlan(r[C.inicio])   : '',
-            termino:  C.termino  >= 0 ? _toISODatePlan(r[C.termino])  : '',
-            progresso: Math.max(0, Math.min(100, Number(prog)||0)),
-            consideracoes: C.consideracoes >= 0 ? String(r[C.consideracoes]||'') : '',
-            status: (C.status >= 0 && String(r[C.status]||'').trim()) ? String(r[C.status]).trim().toUpperCase() : 'NI',
-            meta:   C.meta   >= 0 ? String(r[C.meta]  ||'') : ''
-          });
-          added++;
-        }
-        if(!added){ alert('Nenhuma linha de ação encontrada abaixo do cabeçalho.'); return; }
-        recalcNumbers(); savePlan(true); renderKPIs(); populateQuemFilter(); renderTable();
-        alert(added + ' ação(ões) importada(s) e acrescentadas ao plano.');
-      }catch(err){
-        console.error('importXLSX', err);
-        alert('Erro ao importar o arquivo: ' + err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  // Pública - chamada pelo roteador da IIFE principal quando entra na tela
+  // Pública - chamada pelo roteador ao entrar na tela e pelo importador após ler a aba
   window.renderPlanejamento = function renderPlanejamento(){
-    // Restaura título personalizado, se houver
-    try{
-      const t = localStorage.getItem(TITLE_KEY);
-      const el = document.getElementById('planTitleText');
-      if(t && el) el.textContent = t;
-    }catch(_){ }
+    const el = document.getElementById('planTitleText');
+    if(el) el.textContent = plano().titulo || TITLE_DEFAULT;
     renderKPIs();
     populateQuemFilter();
     renderTable();
@@ -12755,25 +12525,7 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
 
   function bindControls(){
     const $ = id => document.getElementById(id);
-    $('planAddBtn')   && $('planAddBtn').addEventListener('click', addNewRow);
-    // v49.31: importar plano de ação (XLSX) — aceita o mesmo layout do export
-    $('planImportBtn') && $('planImportBtn').addEventListener('click', ()=>{ const fi=$('planImportFile'); if(fi) fi.click(); });
-    $('planImportFile') && $('planImportFile').addEventListener('change', e=>{
-      const f = e.target.files && e.target.files[0];
-      if(f) importXLSX(f);
-      e.target.value = '';
-    });
-    $('planExportBtn')&& $('planExportBtn').addEventListener('click', exportXLSX);
-    $('planSaveBtn') && $('planSaveBtn').addEventListener('click', ()=>savePlan(false));
-    $('planResetBtn')&& $('planResetBtn').addEventListener('click', ()=>{
-      if(!confirm('Restaurar o plano original?\nIsso descartará todas as alterações salvas.')) return;
-      PLAN_DATA = JSON.parse(JSON.stringify(PLAN_DEFAULT));
-      try{ localStorage.removeItem(TITLE_KEY); }catch(_){}
-      const el = document.getElementById('planTitleText');
-      if(el) el.textContent = 'PLANEJAMENTO DA OPERAÇÃO';
-      savePlan(true); renderKPIs(); populateQuemFilter(); renderTable();
-    });
-
+    $('planExportBtn') && $('planExportBtn').addEventListener('click', exportXLSX);
     $('planFilterStatus') && $('planFilterStatus').addEventListener('change', e=>{ PLAN_FILTER.status = e.target.value; renderTable(); });
     $('planFilterQuem')   && $('planFilterQuem').addEventListener('change',   e=>{ PLAN_FILTER.quem   = e.target.value; renderTable(); });
     $('planFilterSearch') && $('planFilterSearch').addEventListener('input',  e=>{ PLAN_FILTER.search = e.target.value; renderTable(); });
@@ -12784,28 +12536,18 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
       if($('planFilterSearch')) $('planFilterSearch').value = '';
       renderTable();
     });
-
-    // Salvar título editável ao perder foco
-    const tt = document.getElementById('planTitleText');
-    if(tt){
-      tt.addEventListener('blur', ()=>savePlan(true));
-      tt.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); tt.blur(); } });
-    }
   }
 
   function bootstrap(){
-    loadPlan();
+    // descarta qualquer plano salvo antes no navegador (agora só vale o importador)
+    try{ localStorage.removeItem('rodobras_plan_pap_v28'); localStorage.removeItem('rodobras_plan_title_v28'); }catch(_){}
     bindControls();
-    // Se a tela inicial já for planejamento (via permissão), renderiza
     const sec = document.getElementById('screen-planejamento');
     if(sec && sec.classList.contains('active')) window.renderPlanejamento();
   }
 
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', bootstrap);
-  } else {
-    bootstrap();
-  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bootstrap); }
+  else { bootstrap(); }
 })();
 </script>
 
