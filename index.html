@@ -734,6 +734,12 @@
   body.dark footer b{ color:#9DC1FF; }
 
   /* ============ TELA CUSTOS ============ */
+  .custo-subtab{display:none;}
+  .custo-subtab.active{display:block;}
+  #custoExtraList:empty::after{
+    content:'Sem valores na coluna CUSTO EXTRA. Importe a planilha de entregas.';
+    display:block; font-size:12px; color:var(--text-soft); padding:10px 0;
+  }
   .custo-cards{
     display:grid;
     grid-template-columns:repeat(2,1fr);
@@ -1370,6 +1376,10 @@
     display:inline-block; font-size:11px; font-weight:700; color:#0f172a;
     background:#f1f5f9; padding:2px 6px; border-radius:4px; align-self:flex-start;
   }
+  .leaflet-popup-content .pop-unit-head { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+  .leaflet-popup-content .pop-unit-phone { font-size:11.5px; font-weight:600; color:#334155; white-space:nowrap; }
+  .leaflet-popup-content .pop-unit-phone a { color:#0057B7; text-decoration:none; }
+  .leaflet-popup-content .pop-unit-phone a:hover { text-decoration:underline; }
   .leaflet-popup-content .pop-unit-addr { font-size:11.5px; color:#334155; line-height:1.35; word-break:break-word; }
   .leaflet-popup-content .pop-unit-noaddr { font-size:11px; color:#94a3b8; font-style:italic; }
   /* v43: pino de cidade atendida (menor, azul-claro) — usado quando filtro Unidade está ativo */
@@ -3400,6 +3410,19 @@ window.rodoLogoCliente = function(nome){
 <!-- TELA: CUSTOS (aba 'custo' do XLSB) -->
 <!-- ============================================================== -->
 <section class="screen" id="screen-custos">
+  <!-- v49.52: abas internas da tela Custos -->
+  <div class="qual-tabs" id="custoTabs">
+    <button class="qual-tab active" data-custo-tab="geral">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      Custos
+    </button>
+    <button class="qual-tab" data-custo-tab="extra">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+      Custo Extra
+    </button>
+  </div>
+
+  <div class="custo-subtab active" id="custoTab-geral">
   <div class="filters">
     <div class="filter-group">
       <label>Mês</label>
@@ -3472,6 +3495,65 @@ window.rodoLogoCliente = function(nome){
     </h3>
     <div class="chart-wrap wide"><canvas id="chartCustoMensal" height="380" style="display: block; box-sizing: border-box; height: 380px; width: 1259px;" width="1259"></canvas></div>
   </div>
+  </div><!-- /custoTab-geral -->
+
+  <!-- v49.52: SEGUNDA TELA — CUSTO EXTRA (coluna CUSTO EXTRA da planilha, por unidade) -->
+  <div class="custo-subtab" id="custoTab-extra">
+    <div class="filters">
+      <div class="filter-group">
+        <label>Mês</label>
+        <select id="cxMes"><option value="">Todos</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Unidade</label>
+        <select id="cxUnidade"><option value="">Todas</option></select>
+      </div>
+      <div class="filter-group clear">
+        <label>&nbsp;</label>
+        <button id="clearCustoExtraBtn" class="btn-clear" title="Limpar todos os filtros">Limpar</button>
+      </div>
+    </div>
+
+    <div class="custo-cards">
+      <div class="custo-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+          Custo Extra por Unidade
+        </h3>
+        <div id="custoExtraList"></div>
+      </div>
+      <div class="custo-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Resumo
+        </h3>
+        <div class="custo-line evt-total" style="border-top:none;margin-top:0;padding-top:0;">
+          <span class="lbl"><span class="dot"></span>Total Custo Extra</span>
+          <span class="val-group"><span class="val" id="custoExtraTotal">R$&nbsp;0,00</span></span>
+        </div>
+        <div class="custo-line">
+          <span class="lbl"><span class="dot"></span>Lançamentos com valor</span>
+          <span class="val-group"><span class="val" id="custoExtraQtd">0</span></span>
+        </div>
+        <div class="custo-line">
+          <span class="lbl"><span class="dot"></span>Unidades com custo extra</span>
+          <span class="val-group"><span class="val" id="custoExtraQtdUni">0</span></span>
+        </div>
+        <div class="custo-line">
+          <span class="lbl"><span class="dot"></span>Maior unidade</span>
+          <span class="val-group"><span class="val" id="custoExtraTop">—</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:22px;">
+      <h3>
+        <span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></span>
+        Custo Extra por Unidade (gráfico)
+      </h3>
+      <div id="chartCustoExtraWrap" style="position:relative;height:360px;"><canvas id="chartCustoExtraUni"></canvas></div>
+    </div>
+  </div><!-- /custoTab-extra -->
 </section>
 <!-- /TELA CUSTOS -->
 
@@ -4239,6 +4321,7 @@ async function loadInitialData(){
   renderAvaliacao();
   populateCustoFilters();
   renderCusto();
+  try{ populateCustoExtraFilters(); renderCustoExtra(); }catch(_){}
 }
 
 /* Filtros */
@@ -6332,6 +6415,7 @@ async function importJSON(file){
     if(typeof renderAvaliacao === 'function'){ renderAvaliacao(); }
     if(typeof populateCustoFilters === 'function'){ populateCustoFilters(); }
     if(typeof renderCusto === 'function'){ renderCusto(); }
+    try{ populateCustoExtraFilters(); renderCustoExtra(); }catch(_){}
     hideOverlay();
     const partes = [];
     if(DATA && DATA.length) partes.push(`${fmt(DATA.length)} entregas`);
@@ -6844,6 +6928,10 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
       fr: findCol('Ocorr 73','OCORR 73','Ocorrencia 73','Ocorrência 73'),
       cp: findCol('cid Parceiros','Cidade Parceiros','Cidade Parceiro','Cid Parceiros'),
       en: findCol('endereco','endereço','Endereco','Endereço','Endereco Parceiro','Endereço Parceiro'),
+      // v49.51: telefone da unidade parceira (coluna 'Contato') — exibido no popup do mapa de Parceiros
+      ct: findCol('Contato','Telefone','Telefone Contato','Contato Parceiro'),
+      // v49.52: coluna CUSTO EXTRA (texto com valor, ex.: "TDA - 180,00", "DEDICADO 200,00 APROVADO")
+      cx: findCol('CUSTO EXTRA','Custo Extra'),
       ci: findCol('cidade','Cidade','CIDADE','Cidade Entrega','Cidade da Entrega','Cidade Destino'),
       // v49.1: NOVA coluna "Cidade do Remetente" — usada na tela PRAZOS para
       // derivar a origem BID (RIO CLARO / SAO PAULO → GRU; JOINVILLE → JOI)
@@ -6868,7 +6956,7 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
       a:0, c:2, d:3, e:4, f:5, h:7, i:8, k:10, l:11, n:13, t:19, y:24,
       m:64, o:66, pr:69, s:70, v:71, ce:82, p:92,
       et:149, fb:157, fc:158, fd:159, fk:166, fm:168, an:169,
-      fp:171, fq:172, fr:173, cp:-1, en:-1, ci:-1, dem:-1,
+      fp:171, fq:172, fr:173, cp:-1, en:-1, ct:-1, cx:-1, ci:-1, dem:-1,
       // v49.26: colunas do card OCORRÊNCIAS (só mapeamento por cabeçalho)
       troca:-1, falta:-1, embalagem:-1, avaria:-1,
       // v49.1: Cidade do Remetente não tem posição fixa no legado — fica -1
@@ -6982,6 +7070,8 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
         fr: norm(r[IDX.fr]).toUpperCase(),
         cp: norm(r[IDX.cp]).toUpperCase(),
         en: norm(r[IDX.en]),
+        ct: norm(r[IDX.ct]),
+        cx: norm(r[IDX.cx]),
         ci: norm(r[IDX.ci]).toUpperCase(),
         dem: etFmt(r[IDX.dem]),
         // v49.1: Cidade do Remetente (uppercase, sem normalização de acentos aqui —
@@ -7051,6 +7141,7 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
     renderAvaliacao();
     populateCustoFilters();
     renderCusto();
+    try{ populateCustoExtraFilters(); renderCustoExtra(); }catch(_){}
     hideOverlay();
     // v19: Resumo do import — mostra colunas + registros (lidos / ignorados)
     const ignoradas = totalLinhas - DATA.length;
@@ -7812,7 +7903,7 @@ document.getElementById('exportBtn').addEventListener('click', openExportModal);
       if(screen === 'coletas') renderColeta();
       if(screen === 'avaliacao') renderAvaliacao();
       if(screen === 'reclame') renderReclame();
-      if(screen === 'custos') renderCusto();
+      if(screen === 'custos'){ renderCusto(); try{ renderCustoExtra(); }catch(_){} }
       if(screen === 'prazos') { try{ renderPrazos(); }catch(e){ console.error(e); } }
       if(screen === 'planejamento') { try{ (window.renderPlanejamento && window.renderPlanejamento()); }catch(_){} }
       if(screen === 'qualidade') { try{ (window.renderQualidade && window.renderQualidade()); }catch(_){} }
@@ -7997,11 +8088,11 @@ function renderAvaliacao(){
     });
   }
 
-  // Média por Mês
-  const mesOrder = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  // Média por Mês — mesma coluna/lógica do filtro MÊS (Data Entrega → r.mesEnt)
+  const mesOrder = MES_ORDER;
   const mesMap = new Map();
   filtered.forEach(r=>{
-    const m = (r.mes||'').toLowerCase().slice(0,3);
+    const m = r.mesEnt;
     if(!m) return;
     if(!mesMap.has(m)) mesMap.set(m, {soma:0, qtd:0});
     const e = mesMap.get(m); e.soma += Number(r.media)||0; e.qtd++;
@@ -8257,6 +8348,149 @@ document.addEventListener('click', e=>{
     ['cfMes','cfCustUnidade','cfEvento'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     populateCustoFilters(); // v49.14: restaura todas as opções
     renderCusto();
+  }
+});
+
+/* ========================================================
+   v49.52: TELA CUSTO EXTRA (aba interna da tela Custos)
+   Fonte: coluna CUSTO EXTRA da planilha de entregas (DATA, campo r.cx).
+   Só entram as linhas em que o texto contém um valor numérico:
+     "TDA - 180,00" -> 180,00 | "DEDICADO -  500,00" -> 500,00 |
+     "DEDICADO 200,00 APROVADO" -> 200,00 | "NAO", "AGUARDANDO AUTORIZACAO",
+     "AREA RURAL ... KM EXTRA" (sem número) -> ignoradas.
+   Soma por UNIDADE (r.n). Mês = coluna Mês (r.fd), igual à tela Entregas.
+   ======================================================== */
+function parseCustoExtraValor(v){
+  if(v == null || v === '') return 0;
+  if(typeof v === 'number') return isFinite(v) ? v : 0;
+  let txt = String(v).replace(/\u00A0/g,' ');
+  // "TDA - 180,00" / "TDA-180,00": o hífen é separador, não sinal negativo
+  txt = txt.replace(/([A-Za-z0-9])\s*-\s*(?=\d)/g, '$1 ');
+  const NUM = '-?\\d+(?:[.,]\\d+)*';
+  let m = txt.match(new RegExp('R\\$\\s*(' + NUM + ')', 'i')) || txt.match(new RegExp('(' + NUM + ')'));
+  if(!m) return 0;
+  let t = m[1];
+  const neg = t.charAt(0) === '-'; if(neg) t = t.slice(1);
+  if(t.indexOf(',') >= 0 && t.indexOf('.') >= 0) t = t.replace(/\./g,'').replace(',','.');
+  else if(t.indexOf(',') >= 0) t = t.replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g,'');
+  const n = parseFloat(t);
+  return isFinite(n) ? (neg ? -n : n) : 0;
+}
+function custoExtraRows(){
+  const out = [];
+  (DATA || []).forEach(r=>{
+    if(!r || !r.cx) return;
+    const v = parseCustoExtraValor(r.cx);
+    if(!v) return;
+    out.push({ mes: String(r.fd||'').toLowerCase(), unidade: String(r.n||'').toUpperCase().trim(), valor: v });
+  });
+  return out;
+}
+function custoExtraFilter(){
+  return {
+    mes: document.getElementById('cxMes') ? document.getElementById('cxMes').value : '',
+    uni: document.getElementById('cxUnidade') ? document.getElementById('cxUnidade').value : ''
+  };
+}
+function populateCustoExtraFilters(base){
+  base = base || custoExtraRows();
+  const mesOrder = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const f = custoExtraFilter();
+  const mesesPres = new Set(base.filter(r=> !f.uni || r.unidade === f.uni).map(r=>r.mes).filter(Boolean));
+  const meses = mesOrder.filter(m=>mesesPres.has(m));
+  const unis = uniqSort(base.filter(r=> !f.mes || r.mes === f.mes).map(r=>r.unidade).filter(Boolean));
+  const selMes = document.getElementById('cxMes');
+  if(selMes){
+    const cur = selMes.value;
+    selMes.innerHTML = '<option value="">Todos</option>' + meses.map(m=>`<option value="${m}">${m.charAt(0).toUpperCase()+m.slice(1)}</option>`).join('');
+    selMes.value = (cur && meses.includes(cur)) ? cur : '';
+  }
+  const selUni = document.getElementById('cxUnidade');
+  if(selUni){
+    const cur = selUni.value;
+    selUni.innerHTML = '<option value="">Todas</option>' + unis.map(u=>`<option value="${u}">${u}</option>`).join('');
+    selUni.value = (cur && unis.includes(cur)) ? cur : '';
+  }
+}
+function renderCustoExtra(){
+  if(!document.getElementById('custoExtraList')) return;
+  const base = custoExtraRows();
+  const f = custoExtraFilter();
+  const filtered = base.filter(r=>{
+    if(f.mes && r.mes !== f.mes) return false;
+    if(f.uni && r.unidade !== f.uni) return false;
+    return true;
+  });
+  const map = new Map();
+  let total = 0;
+  filtered.forEach(r=>{
+    const u = r.unidade || '(sem unidade)';
+    map.set(u, (map.get(u)||0) + r.valor);
+    total += r.valor;
+  });
+  const arr = Array.from(map.entries()).filter(e=>e[1] !== 0).sort((a,b)=> b[1]-a[1]);
+
+  const box = document.getElementById('custoExtraList');
+  let html = arr.map(([u,v])=>{
+    const pct = total ? (v/total*100).toFixed(1).replace('.',',')+'%' : '0%';
+    return `<div class="custo-line evt"><span class="lbl"><span class="dot"></span>${u}</span>` +
+           `<span class="val-group"><span class="val">${fmtBRL(v)}</span><span class="pct-pill">${pct}</span></span></div>`;
+  }).join('');
+  if(arr.length){
+    html += `<div class="custo-line evt-total"><span class="lbl"><span class="dot"></span>Total</span>` +
+            `<span class="val-group"><span class="val">${fmtBRL(total)}</span><span class="pct-pill">100%</span></span></div>`;
+  }
+  box.innerHTML = html;
+
+  const eT = document.getElementById('custoExtraTotal');  if(eT) eT.textContent = fmtBRL(total);
+  const eN = document.getElementById('custoExtraQtd');    if(eN) eN.textContent = fmt(filtered.length);
+  const eQ = document.getElementById('custoExtraQtdUni'); if(eQ) eQ.textContent = fmt(arr.length);
+  const eP = document.getElementById('custoExtraTop');    if(eP) eP.textContent = arr.length ? (arr[0][0] + ' • ' + fmtBRL(arr[0][1])) : '—';
+
+  const wrap = document.getElementById('chartCustoExtraWrap');
+  if(wrap) wrap.style.height = Math.max(320, arr.length * 28 + 60) + 'px';
+  destroy('chartCustoExtraUni');
+  const ctx = document.getElementById('chartCustoExtraUni');
+  if(ctx){
+    charts['chartCustoExtraUni'] = new Chart(ctx, {
+      type:'bar',
+      data:{ labels: arr.map(d=>d[0]), datasets:[{ label:'Custo Extra', data: arr.map(d=>d[1]), backgroundColor:'#0057B7', borderRadius:4, maxBarThickness:22 }] },
+      options:{
+        indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ right:80 } },
+        plugins:{
+          legend:{ display:false },
+          datalabels:{ color:'#0F1B2D', font:{ weight:'bold', size:10 }, anchor:'end', align:'right',
+            formatter:(v)=> 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) },
+          tooltip:{ callbacks:{ label:(c)=> 'Custo Extra: ' + fmtBRL(c.parsed.x) } }
+        },
+        scales:{
+          x:{ beginAtZero:true, grid:{ color:'rgba(0,0,0,.05)' } },
+          y:{ grid:{ display:false }, ticks:{ autoSkip:false } }
+        }
+      }
+    });
+  }
+}
+
+['cxMes','cxUnidade'].forEach(id=>{
+  document.addEventListener('change', e=>{
+    if(e.target && e.target.id === id){ populateCustoExtraFilters(); renderCustoExtra(); }
+  });
+});
+document.addEventListener('click', e=>{
+  if(e.target && e.target.id === 'clearCustoExtraBtn'){
+    ['cxMes','cxUnidade'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    populateCustoExtraFilters(); renderCustoExtra();
+  }
+  const tabBtn = e.target && e.target.closest ? e.target.closest('#custoTabs .qual-tab') : null;
+  if(tabBtn){
+    const tab = tabBtn.getAttribute('data-custo-tab');
+    document.querySelectorAll('#custoTabs .qual-tab').forEach(b=>b.classList.toggle('active', b===tabBtn));
+    document.querySelectorAll('#screen-custos .custo-subtab').forEach(p=>p.classList.toggle('active', p.id === 'custoTab-' + tab));
+    if(tab === 'extra'){ populateCustoExtraFilters(); renderCustoExtra(); }
+    else if(typeof renderCusto === 'function'){ renderCusto(); }
   }
 });
 
@@ -8721,10 +8955,12 @@ function renderParceirosMap(rows){
     var uni = String(r.n||'').toUpperCase().trim();
     if(uni){
       if(!groups[key].unidades[uni]){
-        groups[key].unidades[uni] = { enderecos:new Set() };
+        groups[key].unidades[uni] = { enderecos:new Set(), contatos:new Set() };
       }
       var end = String(r.en||'').trim();
       if(end) groups[key].unidades[uni].enderecos.add(end);
+      var ctt = String(r.ct||'').trim();
+      if(ctt) groups[key].unidades[uni].contatos.add(ctt);
     }
     ufTotalsCidades[uf].add(cid);
 
@@ -8798,8 +9034,18 @@ function renderParceirosMap(rows){
         var addrHtml = ends.length
           ? ends.map(function(e){ return '<div class="pop-unit-addr">'+ _esc(e) +'</div>'; }).join('')
           : '<div class="pop-unit-noaddr">Endereço não informado</div>';
+        var tels = Array.from(g.unidades[u].contatos || []);
+        var telHtml = tels.length
+          ? '<span class="pop-unit-phone">📞 '+ tels.map(function(t){
+              var digits = t.replace(/[^0-9+]/g,'');
+              return digits ? '<a href="tel:'+ _esc(digits) +'">'+ _esc(t) +'</a>' : _esc(t);
+            }).join(' / ') +'</span>'
+          : '';
         return '<div class="pop-unit-item">'+
-                 '<span class="pop-unit-name">'+ _esc(u) +'</span>'+
+                 '<div class="pop-unit-head">'+
+                   '<span class="pop-unit-name">'+ _esc(u) +'</span>'+
+                   telHtml +
+                 '</div>'+
                  '<span class="pop-unit-city">'+ _esc(g.cidade) +' / '+ _esc(g.uf) +'</span>'+
                  addrHtml +
                '</div>';
