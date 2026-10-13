@@ -3212,6 +3212,10 @@ window.rodoLogoCliente = function(nome){
 <section class="screen" id="screen-avaliacao">
   <div class="filters">
     <div class="filter-group">
+      <label>Mês</label>
+      <select id="afMes"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
       <label>UF</label>
       <select id="afUf"><option value="">Todas</option><option value="PR">PR</option><option value="RS">RS</option><option value="SC">SC</option></select>
     </div>
@@ -6324,7 +6328,7 @@ async function importJSON(file){
     renderParceiros();
     populateColetaFilters();
     renderColeta();
-    if(typeof populateAvaliacaoFilters === 'function'){ populateAvaliacaoFilters(); }
+    if(typeof populateAvalFilters === 'function'){ populateAvalFilters(); }
     if(typeof renderAvaliacao === 'function'){ renderAvaliacao(); }
     if(typeof populateCustoFilters === 'function'){ populateCustoFilters(); }
     if(typeof renderCusto === 'function'){ renderCusto(); }
@@ -6419,10 +6423,33 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
         const aWs = wb.Sheets[aSheet];
         const aArr = XLSX.utils.sheet_to_json(aWs, { header:1, defval:null, blankrows:false });
         const aOut = [];
+        // Coluna "Data Entrega" (localizada pelo cabeçalho) -> mês do filtro da tela Avaliação
+        const _hn = (c) => String(c==null?'':c).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+        const _hdrA = (aArr[0]||[]).map(_hn);
+        let colEnt = _hdrA.findIndex(h => h === 'data entrega');
+        if(colEnt < 0) colEnt = _hdrA.findIndex(h => h.includes('data') && h.includes('entrega'));
+        if(colEnt < 0){ console.warn('Aba avaliacao: coluna "Data Entrega" não encontrada'); toast('Aba Avaliação: coluna "Data Entrega" não encontrada — o filtro Mês ficará vazio.', 'error'); }
+        // "Média Avaliação" (card Média Geral) e "UNIDADE" também são localizadas pelo cabeçalho; sem cabeçalho, usa as posições antigas (L e T)
+        let colMedia = _hdrA.findIndex(h => h === 'media avaliacao');
+        if(colMedia < 0) colMedia = _hdrA.findIndex(h => h.includes('media') && h.includes('avalia'));
+        if(colMedia < 0){ colMedia = 11; console.warn('Aba avaliacao: coluna "Média Avaliação" não encontrada no cabeçalho; usando a coluna L'); }
+        let colUni = _hdrA.findIndex(h => h === 'unidade');
+        if(colUni < 0){ colUni = 19; console.warn('Aba avaliacao: coluna "UNIDADE" não encontrada no cabeçalho; usando a coluna T'); }
+        const _numA = (v) => { if(typeof v === 'number') return v; let t = String(v==null?'':v).trim(); if(t.includes(',')) t = t.replace(/\./g,'').replace(',','.'); return t === '' ? NaN : parseFloat(t); };
+        const _mesesA = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+        const _mesDe = (v) => {
+          if(v === null || v === undefined || v === '') return '';
+          if(v instanceof Date) return isNaN(v.getTime()) ? '' : _mesesA[v.getMonth()];
+          if(typeof v === 'number' && isFinite(v) && v > 1) return _mesesA[new Date(Math.round((v - 25569) * 86400 * 1000)).getUTCMonth()] || '';
+          const t = String(v).trim();
+          let m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/); if(m){ const n = parseInt(m[2],10); return (n>=1&&n<=12) ? _mesesA[n-1] : ''; }
+          m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(m){ const n = parseInt(m[2],10); return (n>=1&&n<=12) ? _mesesA[n-1] : ''; }
+          const d = new Date(t); return isNaN(d.getTime()) ? '' : _mesesA[d.getMonth()];
+        };
         for(let i=1;i<aArr.length;i++){
           const r = aArr[i]; if(!r) continue;
           // K=10 dataAvaliacao, L=11 media, P=15 uf, Q=16 motorista, T=19 unidade
-          const media = parseFloat(r[11]);
+          const media = _numA(r[colMedia]);   // coluna Média Avaliação
           if(!isFinite(media)) continue;
           // K = data Avaliação -> derivar mês (pt-BR jan-dez)
           let mes = '';
@@ -6442,10 +6469,11 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
           }
           aOut.push({
             mes: mes,
+            mesEnt: colEnt >= 0 ? _mesDe(r[colEnt]) : '',   // mês da Data Entrega (filtro Mês)
             media: media,
             uf: norm(r[15]).toUpperCase(),
             motorista: norm(r[16]).toUpperCase(),
-            unidade: norm(r[19]).toUpperCase()
+            unidade: norm(r[colUni]).toUpperCase()   // coluna UNIDADE
           });
         }
         DATA_AVALIACAO = aOut;
@@ -7132,6 +7160,9 @@ function exportExcel(){
     const activeScreenId = activeScreenEl ? (activeScreenEl.id || '') : '';
     const activeScreen = activeScreenId.replace('screen-', '') || 'entregas';
 
+    /* Tela Parceiros: relatório próprio (unidade + cidades atendidas) obedecendo os filtros da PRÓPRIA tela */
+    if(activeScreen === 'parceiros'){ exportParceirosExcel(); return; }
+
     const f = currentFilter();
     const rows = applyFilter(DATA, f);
 
@@ -7299,75 +7330,6 @@ function exportExcel(){
       XLSX.utils.book_append_sheet(wb, ws1,          'Entregas');
       partes.push(`${fmt(rows.length)} entregas`);
     }
-    else if(activeScreen === 'parceiros'){
-      /* v21: planilha PARCEIROS - sumário por UF e detalhes por unidade parceira (PR/SC/RS) */
-      const UFS_PARC = ['PR','SC','RS'];
-      const rowsParc = rows.filter(r => UFS_PARC.includes(String(r.m||'').toUpperCase()));
-
-      // Sheet: Resumo Parceiros por UF
-      const aoaParcUf = [['UF','Total','Com Romaneio','% Romaneio','Baixa Mobile','% Mobile','Ocorrência 73','% Ocorr.73','No Prazo','Atrasado','Justificado','Nível de Serviço (%)']];
-      // v27: Romaneio, Baixa Mobile e Ocorrência 73 — todos sobre ENTREGUES
-      UFS_PARC.forEach(uf => {
-        const ufRows = rowsParc.filter(r => String(r.m||'').toUpperCase() === uf);
-        const tot = ufRows.length;
-        const entr = ufRows.filter(r => r.c === 'ENTREGUE');
-        const totE = entr.length;
-        const rom = entr.filter(r => r.l === 'SIM').length;
-        const mob = entr.filter(r => r.h === 'MOBILE').length;
-        const tH  = entr.filter(r => r.h).length;
-        const oc73 = entr.filter(r => String(r.fr||'').toUpperCase() === 'SIM').length;
-        const nP  = entr.filter(r => r.e === 'NO PRAZO').length;
-        const atr = entr.filter(r => r.e === 'ATRASADO').length;
-        const jus = entr.filter(r => r.fm === 'JUSTIFICADO').length;
-        const base = nP + atr;
-        const ns = base ? +(((nP + jus)/base)*100).toFixed(2) : 0;
-        aoaParcUf.push([uf, tot, rom, pct2(rom,totE), mob, pct2(mob, tH), oc73, pct2(oc73, totE), nP, atr, jus, ns]);
-      });
-      const wsParcUf = XLSX.utils.aoa_to_sheet(aoaParcUf);
-      wsParcUf['!cols'] = aoaParcUf[0].map(h => ({ wch: Math.max(10, String(h).length + 2) }));
-      XLSX.utils.book_append_sheet(wb, wsParcUf, 'Parceiros por UF');
-
-      // Sheet: Unidades Parceiras (detalhe por unidade)
-      const aoaParcUni = [['UF','Unidade','Total','Com Romaneio','% Romaneio','Baixa Mobile','% Mobile','Ocorrência 73','% Ocorr.73','Nível de Serviço (%)']];
-      const unidadesParc = {};
-      rowsParc.forEach(r => {
-        const uf = String(r.m||'').toUpperCase();
-        const uni = r.n || '—';
-        const k = uf + '||' + uni;
-        if(!unidadesParc[k]) unidadesParc[k] = { uf, uni, rows:[] };
-        unidadesParc[k].rows.push(r);
-      });
-      // v27: Romaneio, Baixa Mobile e Ocorrência 73 — todos sobre ENTREGUES
-      Object.values(unidadesParc).sort((a,b)=> b.rows.length - a.rows.length).forEach(g => {
-        const tot = g.rows.length;
-        const entr = g.rows.filter(r => r.c === 'ENTREGUE');
-        const totE = entr.length;
-        const rom = entr.filter(r => r.l === 'SIM').length;
-        const mob = entr.filter(r => r.h === 'MOBILE').length;
-        const tH  = entr.filter(r => r.h).length;
-        const oc73 = entr.filter(r => String(r.fr||'').toUpperCase() === 'SIM').length;
-        const nP  = entr.filter(r => r.e === 'NO PRAZO').length;
-        const atr = entr.filter(r => r.e === 'ATRASADO').length;
-        const jus = entr.filter(r => r.fm === 'JUSTIFICADO').length;
-        const base = nP + atr;
-        const ns = base ? +(((nP + jus)/base)*100).toFixed(2) : 0;
-        aoaParcUni.push([g.uf, g.uni, tot, rom, pct2(rom,totE), mob, pct2(mob, tH), oc73, pct2(oc73, totE), ns]);
-      });
-      const wsParcUni = XLSX.utils.aoa_to_sheet(aoaParcUni);
-      wsParcUni['!cols'] = aoaParcUni[0].map(h => ({ wch: Math.max(10, String(h).length + 2) }));
-      XLSX.utils.book_append_sheet(wb, wsParcUni, 'Unidades Parceiras');
-
-      // Sheet: Detalhe (linhas brutas dos parceiros PR/SC/RS) - sub-conjunto das entregas
-      const aoaParcDet = [headerMap.map(h => h[0])];
-      rowsParc.forEach(r => {
-        aoaParcDet.push(headerMap.map(([_, k]) => r[k] !== undefined && r[k] !== null ? r[k] : ''));
-      });
-      const wsParcDet = XLSX.utils.aoa_to_sheet(aoaParcDet);
-      wsParcDet['!cols'] = headerMap.map(h => ({ wch: Math.max(12, h[0].length + 2) }));
-      XLSX.utils.book_append_sheet(wb, wsParcDet, 'Detalhe Parceiros');
-
-      partes.push(`${fmt(rowsParc.length)} entregas parceiros (PR/SC/RS)`);
-    }
     else if(activeScreen === 'coletas'){
       if(wsColetas){
         XLSX.utils.book_append_sheet(wb, wsColetas, 'Coletas');
@@ -7411,6 +7373,75 @@ function exportExcel(){
     console.error(err);
     hideOverlay();
     toast('Falha ao exportar: '+err.message, 'error');
+  }
+}
+
+/* Relatório Excel da tela PARCEIROS: por unidade parceira, a cidade do parceiro e as cidades atendidas.
+   Usa EXATAMENTE os filtros da tela (Mês, UF, Operação, Unidade) e as mesmas regras da tabela/mapa. */
+function exportParceirosExcel(){
+  try {
+    const f = parceirosFilter();
+    const rows = applyParceirosFilter(DATA, f, { ignoreMes:false });
+    if(!rows.length){ toast('Nenhum dado para exportar na tela Parceiros com os filtros aplicados', 'error'); return; }
+    showOverlay('Gerando relatório da tela: PARCEIROS...');
+
+    const up = v => String(v==null?'':v).toUpperCase().trim();
+    const NAO_ID = new Set(['NAO IDENTIFICADO','NÃO IDENTIFICADO']);
+    const grupos = {};   // UF|Unidade
+    rows.forEach(r=>{
+      const k = r.m + '|' + up(r.n);
+      const g = grupos[k] || (grupos[k] = { uf:r.m, uni:up(r.n), cidParc:new Set(), ends:new Set(), total:0, cid:{} });
+      g.total++;
+      const cp = up(r.cp); if(cp) g.cidParc.add(cp);
+      const en = String(r.en||'').trim(); if(en) g.ends.add(en);
+      const ci = up(r.ci); if(ci && !NAO_ID.has(ci)) g.cid[ci] = (g.cid[ci]||0) + 1;
+    });
+    const lista = Object.values(grupos).sort((a,b)=> a.uf.localeCompare(b.uf) || a.uni.localeCompare(b.uni));
+
+    // Aba 1: uma linha por unidade, com a lista das cidades atendidas
+    const aoaUni = [['UF','Unidade','Cidade do Parceiro','Endereço','Total de Entregas','Nº de Cidades Atendidas','Cidades Atendidas']];
+    lista.forEach(g=>{
+      const cidades = Object.keys(g.cid).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+      aoaUni.push([g.uf, g.uni, Array.from(g.cidParc).join(' / '), Array.from(g.ends).join(' | '), g.total, cidades.length, cidades.join(', ')]);
+    });
+    const wsUni = XLSX.utils.aoa_to_sheet(aoaUni);
+    wsUni['!cols'] = [{wch:6},{wch:12},{wch:24},{wch:40},{wch:16},{wch:22},{wch:90}];
+    wsUni['!autofilter'] = { ref: 'A1:G' + aoaUni.length };
+
+    // Aba 2: uma linha por unidade + cidade atendida, com a quantidade de entregas
+    const aoaCid = [['UF','Unidade','Cidade do Parceiro','Cidade Atendida','Entregas']];
+    lista.forEach(g=>{
+      const cp = Array.from(g.cidParc).join(' / ');
+      Object.keys(g.cid).sort((a,b)=> g.cid[b]-g.cid[a] || a.localeCompare(b,'pt-BR'))
+        .forEach(c => aoaCid.push([g.uf, g.uni, cp, c, g.cid[c]]));
+    });
+    const wsCid = XLSX.utils.aoa_to_sheet(aoaCid);
+    wsCid['!cols'] = [{wch:6},{wch:12},{wch:24},{wch:32},{wch:12}];
+    wsCid['!autofilter'] = { ref: 'A1:E' + aoaCid.length };
+
+    // Aba 3: filtros aplicados
+    const mesTxt = f.mes ? f.mes.charAt(0).toUpperCase() + f.mes.slice(1) : 'Todos';
+    const wsFil = XLSX.utils.aoa_to_sheet([
+      ['FILTROS APLICADOS (tela Parceiros)',''],
+      ['Mês', mesTxt], ['UF', f.uf || 'Todas'], ['Operação', f.op || 'Todas'], ['Unidade', f.uni || 'Todas'],
+      ['',''],
+      ['Unidades no relatório', lista.length], ['Entregas consideradas', rows.length],
+      ['Data de Geração', new Date().toLocaleString('pt-BR')]
+    ]);
+    wsFil['!cols'] = [{wch:36},{wch:24}];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsUni, 'Unidades e Cidades');
+    XLSX.utils.book_append_sheet(wb, wsCid, 'Cidades Atendidas');
+    XLSX.utils.book_append_sheet(wb, wsFil, 'Filtros');
+
+    const ts = new Date(), pad = n => String(n).padStart(2,'0');
+    XLSX.writeFile(wb, `Dashboard_Rodobras_parceiros_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.xlsx`);
+    hideOverlay();
+    toast('Exportado (PARCEIROS): ' + lista.length + ' unidade(s) • ' + (aoaCid.length-1) + ' cidade(s) atendida(s)', 'success');
+  } catch(err){
+    console.error(err); hideOverlay();
+    toast('Falha ao exportar: ' + err.message, 'error');
   }
 }
 
@@ -7903,10 +7934,19 @@ function populateAvalFilters(){
   const unis = uniqSort(DATA_AVALIACAO.map(r=>r.unidade).filter(Boolean));
   fillSelect('afUf', ufs);
   fillSelect('afUnidade', unis);
+  // Mês (Data Entrega): só os meses que existem nos dados
+  const selM = document.getElementById('afMes');
+  if(selM){
+    const cur = selM.value;
+    const meses = MES_ORDER.filter(m => DATA_AVALIACAO.some(r => r.mesEnt === m));
+    selM.innerHTML = '<option value="">Todos</option>' + meses.map(m => `<option value="${m}">${m.charAt(0).toUpperCase()+m.slice(1)}</option>`).join('');
+    if(cur && meses.includes(cur)) selM.value = cur;
+  }
 }
 
 function avalFilter(){
   return {
+    mes: document.getElementById('afMes').value,
     uf: document.getElementById('afUf').value,
     uni: document.getElementById('afUnidade').value
   };
@@ -7914,6 +7954,7 @@ function avalFilter(){
 
 function applyAvalFilter(rows, f){
   return rows.filter(r=>{
+    if(f.mes && r.mesEnt !== f.mes) return false;
     if(f.uf && r.uf !== f.uf) return false;
     if(f.uni && r.unidade !== f.uni) return false;
     return true;
@@ -8010,14 +8051,14 @@ function renderAvaliacao(){
   }).join('') || '<li><span class="label">Sem dados</span></li>';
 }
 
-['afUf','afUnidade'].forEach(id=>{
+['afMes','afUf','afUnidade'].forEach(id=>{
   document.addEventListener('change', e=>{
     if(e.target && e.target.id === id) renderAvaliacao();
   });
 });
 document.addEventListener('click', e=>{
   if(e.target && e.target.id === 'clearAvalBtn'){
-    ['afUf','afUnidade'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    ['afMes','afUf','afUnidade'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     renderAvaliacao();
   }
 });
@@ -13759,7 +13800,7 @@ const VERSAO_DADOS = '2026-09-09';
 // Last-Modified do servidor NÃO serve para isso: em hospedagem
 // estática ele traz a data do deploy do site, não a do arquivo.
 // Formatos aceitos: 'AAAA-MM-DD HH:MM', 'AAAA-MM-DDTHH:MM' ou 'AAAA-MM-DD'.
-const DATA_ARQUIVO_DADOS = '2026-10-13 10:03';
+const DATA_ARQUIVO_DADOS = '2026-10-09 10:08';
 
 async function autoCarregarDados() {
   const fileInput = document.getElementById('fileInput');
