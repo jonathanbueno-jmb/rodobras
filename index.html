@@ -7758,7 +7758,7 @@ function _buildParceirosMapCanvas(){
     c.fillText('Sem coordenada no mapa: '+unmapped.map(function(p){ return p.cidade+' ('+p.n+')'; }).join(', '), rx, Math.min(y+2*S, H-4*S));
   }
   c.fillStyle='#94a3b8'; c.font='500 '+(2.1*S)+'px '+FONT;
-  c.fillText('Dashboard de Nível de Serviço • PARCEIROS • Parceiro = unidade (coluna Unidade); cidade = coluna "cid Parceiros"', 6*S, H-1.8*S);
+  c.fillText('Dashboard de Nível de Serviço • ATENDIMENTO PARCEIROS', 6*S, H-1.8*S);
   return cv;
 }
 
@@ -14274,7 +14274,7 @@ const VERSAO_DADOS = '2026-09-09';
 // Last-Modified do servidor NÃO serve para isso: em hospedagem
 // estática ele traz a data do deploy do site, não a do arquivo.
 // Formatos aceitos: 'AAAA-MM-DD HH:MM', 'AAAA-MM-DDTHH:MM' ou 'AAAA-MM-DD'.
-const DATA_ARQUIVO_DADOS = '2026-10-14 10:12';
+const DATA_ARQUIVO_DADOS = '2026-10-15 10:00';
 
 async function autoCarregarDados() {
   const fileInput = document.getElementById('fileInput');
