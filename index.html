@@ -4502,6 +4502,17 @@ function fillSelect(id, items){
   });
   if(cur && items.includes(cur)) sel.value = cur;
   else if(cur && !items.includes(cur)) sel.value = ''; // valor não disponível mais
+  // FIX unidade: usuário de unidade tem o filtro TRAVADO. Se a unidade dele não estiver
+  // nas opções (sem registros nos dados), mantém a opção travada em vez de zerar o select —
+  // senão a trava recria a opção, dispara 'change' e este rebuild apaga de novo (loop infinito).
+  if(id === 'fUnidade' && window.__unitLock){
+    if(!Array.from(sel.options).some(o => o.value === window.__unitLock)){
+      const op = document.createElement('option');
+      op.value = window.__unitLock; op.textContent = window.__unitLock;
+      sel.appendChild(op);
+    }
+    sel.value = window.__unitLock;
+  }
 }
 
 /* Antecipadas */
@@ -12853,9 +12864,12 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
         const op = document.createElement('option'); op.value = lock; op.textContent = lock;
         fUni.appendChild(op);
       }
-      if(fUni.value !== lock){
-        fUni.value = lock;
-        try { fUni.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+      if(fUni.value !== lock && !window.__enforcingUnitLock){
+        window.__enforcingUnitLock = true; // FIX: evita reentrância (change -> rebuild -> observer -> change)
+        try {
+          fUni.value = lock;
+          try { fUni.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+        } finally { window.__enforcingUnitLock = false; }
       }
       fUni.disabled = true;
       fUni.setAttribute('title','Filtro travado para a unidade '+lock);
