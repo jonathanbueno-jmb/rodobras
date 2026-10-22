@@ -292,6 +292,39 @@
     background:linear-gradient(90deg, rgba(0,87,183,.10), rgba(0,87,183,.04));
     padding:3px 10px;border-radius:8px;border:1px solid rgba(0,87,183,.15);white-space:nowrap;
   }
+
+  /* Previsão de Entrega: total clicável + pop-out com CTRC / Cidade / Data */
+  .card .card-title .title-right.title-right-click{cursor:pointer;user-select:none;transition:background .15s,box-shadow .15s,transform .1s;}
+  .card .card-title .title-right.title-right-click:hover{background:linear-gradient(90deg, rgba(0,87,183,.22), rgba(0,87,183,.10));box-shadow:0 2px 8px rgba(0,87,183,.20);}
+  .card .card-title .title-right.title-right-click:active{transform:scale(.97);}
+  .card .card-title .title-right.title-right-click:focus-visible{outline:2px solid var(--rodo-blue-light);outline-offset:2px;}
+  .prev-modal-backdrop{position:fixed;inset:0;background:rgba(15,27,45,.55);display:none;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(4px);padding:16px;}
+  .prev-modal-backdrop.show{display:flex;}
+  .prev-modal{background:var(--card);color:var(--text);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.28);width:min(700px,100%);max-height:min(80vh,720px);display:flex;flex-direction:column;position:relative;overflow:hidden;animation:prevModalIn .18s ease-out;}
+  @keyframes prevModalIn{from{transform:translateY(8px);opacity:0;}to{transform:none;opacity:1;}}
+  .prev-modal-head{padding:18px 96px 12px 22px;border-bottom:1px solid var(--border);}
+  .prev-modal-head h3{margin:0;font-size:17px;color:var(--text);}
+  .prev-modal-head p{margin:4px 0 0;font-size:12.5px;color:var(--text-soft);}
+  .prev-modal-close{position:absolute;top:10px;right:12px;width:32px;height:32px;border:none;border-radius:8px;background:transparent;color:var(--text-soft);font-size:24px;line-height:1;cursor:pointer;}
+  .prev-modal-close:hover{background:rgba(127,127,127,.15);color:var(--text);}
+  .prev-modal-body{overflow:auto;padding:0 6px 8px;}
+  .prev-modal table{width:100%;border-collapse:collapse;font-size:13px;}
+  .prev-modal thead th{position:sticky;top:0;z-index:1;background:var(--card);text-align:left;padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-soft);border-bottom:2px solid var(--border);}
+  .prev-modal tbody td{padding:8px 14px;border-bottom:1px solid var(--border);color:var(--text);}
+  .prev-modal tbody tr:hover td{background:rgba(0,87,183,.06);}
+  .prev-modal td.ctrc{font-weight:700;color:var(--rodo-blue-2);white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .prev-modal td.data{white-space:nowrap;font-variant-numeric:tabular-nums;}
+  body.dark .prev-modal td.ctrc{color:#7FB3FF;}
+  .prev-modal-empty{padding:32px 16px;text-align:center;color:var(--text-soft);font-size:13px;}
+  .prev-modal-dl{position:absolute;top:10px;right:48px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:transparent;color:var(--text-soft);cursor:pointer;}
+  .prev-modal-dl:hover:not(:disabled){background:rgba(22,163,74,.14);color:var(--good);}
+  .prev-modal-dl:focus-visible,.prev-modal-close:focus-visible{outline:2px solid var(--rodo-blue-light);outline-offset:1px;}
+  .prev-modal-dl:disabled{opacity:.35;cursor:not-allowed;}
+  .prev-modal td.dia{white-space:nowrap;}
+  .prev-dia{display:inline-block;padding:1px 9px;border-radius:6px;font-size:12px;font-weight:700;color:var(--rodo-blue-2);background:rgba(0,87,183,.10);}
+  .prev-dia.d0{color:#dc2626;background:rgba(220,38,38,.12);}
+  body.dark .prev-dia{color:#7FB3FF;background:rgba(127,179,255,.15);}
+  body.dark .prev-dia.d0{color:#f87171;background:rgba(248,113,113,.15);}
   .card .card-title svg{width:18px;height:18px;color:var(--rodo-blue-2);}
   .card .big{font-size:30px;font-weight:800;color:var(--rodo-blue);line-height:1.1;}
   .card .big-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;}
@@ -598,7 +631,7 @@
   .toast{
     position:fixed;bottom:24px;right:24px;background:var(--rodo-blue);color:#fff;padding:14px 20px;
     border-radius:10px;box-shadow:var(--shadow-hover);font-size:14px;opacity:0;pointer-events:none;
-    transition:opacity .25s ease, transform .25s ease;transform:translateY(10px);z-index:1000;
+    transition:opacity .25s ease, transform .25s ease;transform:translateY(10px);z-index:10000;
   }
   .toast.show{opacity:1;transform:translateY(0);}
   .toast.error{background:#dc2626;}
@@ -1828,7 +1861,7 @@ window.rodoLogoCliente = function(nome){
     </div>
 
     <div class="card">
-      <div class="card-title"><span class="title-left"><span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="11" rx="1" ry="1"></rect><path d="M15 9h4l3 4v4h-7"></path><circle cx="6" cy="19" r="2"></circle><circle cx="18" cy="19" r="2"></circle></svg></span> Previsão de Entrega</span><span class="title-right" id="kPrevTitle">412</span></div>
+      <div class="card-title"><span class="title-left"><span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="11" rx="1" ry="1"></rect><path d="M15 9h4l3 4v4h-7"></path><circle cx="6" cy="19" r="2"></circle><circle cx="18" cy="19" r="2"></circle></svg></span> Previsão de Entrega</span><span class="title-right title-right-click" id="kPrevTitle" role="button" tabindex="0" title="Clique para ver as entregas que compõem este total">412</span></div>
       <div class="sub" style="margin-top:4px;">
         <div class="line prev-today"><span>Hoje <span class="preventivo-date" id="kPrevDate0">(25/09)</span></span><b id="kPrev0">179</b></div>
         <div class="line prev"><span>Amanhã <span class="preventivo-date" id="kPrevDate1">(26/09)</span></span><b id="kPrev1">0</b></div>
@@ -3294,7 +3327,7 @@ window.rodoLogoCliente = function(nome){
   </div>
 
   <div class="cards" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
-    <!-- v42: Novo card - Nota Reclame Aqui (gauge com meta 8,5) -->
+    <!-- v42: Novo card - Nota Reclame Aqui (gauge com meta 9) -->
     <div class="card recl-card">
       <div class="card-title">
         <span class="title-left">
@@ -3306,7 +3339,7 @@ window.rodoLogoCliente = function(nome){
         <canvas id="chartReclNotaGauge"></canvas>
         <div id="reclNotaGaugeValue" style="position:absolute;left:0;right:0;bottom:8px;text-align:center;pointer-events:none;">
           <div id="reclNotaGaugeNum" style="font-size:2rem;font-weight:800;color:var(--rodo-blue);line-height:1;">0,0</div>
-          <div style="font-size:10px;font-weight:700;color:var(--text-soft);letter-spacing:.4px;text-transform:uppercase;margin-top:2px;">Meta 8,5</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-soft);letter-spacing:.4px;text-transform:uppercase;margin-top:2px;">Meta 9,0</div>
         </div>
       </div>
     </div>
@@ -4258,6 +4291,7 @@ function pct(n){ if(!isFinite(n)) return '0%'; return (n*100).toFixed(1).replace
 
 /* Dataset */
 let DATA = [];
+let PREV_ROWS = []; // entregas que compõem o total do card "Previsão de Entrega" (pop-out)
 let DATA_COLETA = [];
 let DATA_AVALIACAO = [];
 let DATA_CUSTO = [];
@@ -4946,6 +4980,7 @@ function render(){
      Cliente (ufAgg/uniAgg/cliAgg — mesma lógica de aggregateBy), breakdown de
      operação (opStat), unidade emissora (emiUni) e volumes/cubagem/peso. */
   const prevCount = [0,0,0,0];
+  const prevRows = []; // mesmas entregas contadas em prevCount (EM ABERTO + ET em hoje/+3)
   const agingBuckets = [0,0,0,0]; // 1-3, 4-7, 8-15, 16+
   const ufAgg = new Map(), uniAgg = new Map(), cliAgg = new Map();
   const opStat = {};
@@ -4967,7 +5002,7 @@ function render(){
   for(const r of rows){
     // Preventivo (apenas EM ABERTO com Previsão de Entrega) + Aging (apenas EM ABERTO)
     if(r.c === 'EM ABERTO'){
-      if(r.et){ const idx = previstosIso.indexOf(r.et); if(idx !== -1) prevCount[idx]++; }
+      if(r.et){ const idx = previstosIso.indexOf(r.et); if(idx !== -1){ prevCount[idx]++; prevRows.push({k:r.k, ci:r.ci, et:r.et, idx:idx}); } }
       const dias = Number(r.d) || 0;
       if(dias >= 1 && dias <= 3) agingBuckets[0]++;
       else if(dias >= 4 && dias <= 7) agingBuckets[1]++;
@@ -5002,6 +5037,7 @@ function render(){
   }
   const elPrevT = getEl('kPrevTitle');
   if(elPrevT) elPrevT.textContent = fmt(prevCount.reduce((a,b)=>a+b,0));
+  PREV_ROWS = prevRows;
 
   /* ====== ENTREGAS EM ABERTO POR FAIXA DE DIAS ====== */
   // Considera apenas Status = EM ABERTO. Usa coluna D = Dias Atraso.
@@ -7238,6 +7274,73 @@ function toIsoDate(d){
   const dd = String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${dd}`;
 }
+
+/* ===== Pop-out do card "Previsão de Entrega" =====
+   Ao clicar no total (#kPrevTitle) lista CTRC, Cidade de entrega e Data (previsão)
+   de cada entrega que compõe o total: EM ABERTO com Previsão = hoje ... +3 dias,
+   respeitando os filtros ativos (PREV_ROWS é preenchido em render()). */
+function _prevEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function _prevBr(iso){ if(!iso) return '—'; const p = String(iso).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; }
+const PREV_DIA = ['Hoje','Amanhã','Depois de amanhã','+3 dias']; // mesmos rótulos do card
+let _prevList = []; // lista exibida no pop-out (usada também no Excel)
+function _prevExcel(){
+  if(!_prevList.length) return;
+  if(typeof XLSX === 'undefined'){ toast('Biblioteca de Excel não carregada.', 'error'); return; }
+  try{
+    const aoa = [['CTRC','Cidade de Entrega','Data de Entrega','Dia']].concat(
+      _prevList.map(r => [r.k || '', r.ci || '', r.et ? _prevBr(r.et) : '', PREV_DIA[r.idx] || '']));
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:18},{wch:32},{wch:16},{wch:18}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Previsão de Entrega');
+    const n = new Date(), z = v => String(v).padStart(2,'0');
+    const stamp = n.getFullYear() + z(n.getMonth()+1) + z(n.getDate()) + '_' + z(n.getHours()) + z(n.getMinutes());
+    XLSX.writeFile(wb, 'Previsao_de_Entrega_' + stamp + '.xlsx');
+    toast('Excel gerado: ' + _prevList.length + (_prevList.length === 1 ? ' entrega.' : ' entregas.'), 'success');
+  }catch(err){
+    console.error(err);
+    toast('Não foi possível gerar o Excel.', 'error');
+  }
+}
+function closePrevModal(){ const m = document.getElementById('prevModal'); if(m) m.classList.remove('show'); }
+function openPrevModal(){
+  let m = document.getElementById('prevModal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'prevModal';
+    m.className = 'prev-modal-backdrop';
+    m.innerHTML =
+      '<div class="prev-modal" role="dialog" aria-modal="true" aria-labelledby="prevModalTitle">' +
+        '<button class="prev-modal-dl" id="prevModalDl" title="Baixar em Excel" aria-label="Baixar em Excel"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>' +
+        '<button class="prev-modal-close" id="prevModalClose" aria-label="Fechar">&times;</button>' +
+        '<div class="prev-modal-head"><h3 id="prevModalTitle">Previsão de Entrega</h3><p id="prevModalSub"></p></div>' +
+        '<div class="prev-modal-body" id="prevModalBody"></div>' +
+      '</div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', e=>{ if(e.target === m) closePrevModal(); });
+    m.querySelector('#prevModalClose').addEventListener('click', closePrevModal);
+    m.querySelector('#prevModalDl').addEventListener('click', _prevExcel);
+  }
+  const list = (PREV_ROWS || []).slice().sort((a,b)=>
+    (a.et||'').localeCompare(b.et||'') ||
+    (a.ci||'').localeCompare(b.ci||'', 'pt-BR') ||
+    (a.k||'').localeCompare(b.k||''));
+  _prevList = list;
+  m.querySelector('#prevModalDl').disabled = !list.length;
+  m.querySelector('#prevModalSub').textContent = fmt(list.length) + (list.length === 1 ? ' entrega' : ' entregas') + ' total';
+  m.querySelector('#prevModalBody').innerHTML = list.length
+    ? '<table><thead><tr><th>CTRC</th><th>Cidade de Entrega</th><th>Data de Entrega</th><th>Dia</th></tr></thead><tbody>' +
+        list.map(r => '<tr><td class="ctrc">' + _prevEsc(r.k || '—') + '</td><td>' + _prevEsc(r.ci || '—') + '</td><td class="data">' + _prevBr(r.et) + '</td><td class="dia"><span class="prev-dia d' + (r.idx === 0 ? 0 : 1) + '">' + _prevEsc(PREV_DIA[r.idx] || '—') + '</span></td></tr>').join('') +
+      '</tbody></table>'
+    : '<div class="prev-modal-empty">Nenhuma entrega neste total.</div>';
+  m.classList.add('show');
+  m.querySelector('.prev-modal-body').scrollTop = 0;
+}
+document.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('#kPrevTitle')) openPrevModal(); });
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closePrevModal();
+  else if((e.key === 'Enter' || e.key === ' ') && e.target && e.target.id === 'kPrevTitle'){ e.preventDefault(); openPrevModal(); }
+});
 
 /* Limpar Filtros */
 document.getElementById('clearFiltersBtn').addEventListener('click', ()=>{
@@ -14290,7 +14393,7 @@ const VERSAO_DADOS = '2026-09-09';
 // Last-Modified do servidor NÃO serve para isso: em hospedagem
 // estática ele traz a data do deploy do site, não a do arquivo.
 // Formatos aceitos: 'AAAA-MM-DD HH:MM', 'AAAA-MM-DDTHH:MM' ou 'AAAA-MM-DD'.
-const DATA_ARQUIVO_DADOS = '2026-10-21 10:16';
+const DATA_ARQUIVO_DADOS = '2026-10-20 10:06';
 
 async function autoCarregarDados() {
   const fileInput = document.getElementById('fileInput');
