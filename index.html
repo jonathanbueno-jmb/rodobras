@@ -6479,17 +6479,20 @@ function showDueTodayAlert(unidade, n){
   a.classList.add('show');
   _armDue();
 }
-/* Login com Unidade travada: o filtro não dispara 'change' feito pelo usuário, então o aviso
-   é exibido uma vez por sessão, na primeira renderização com dados da tela Entregas. */
+/* Ao entrar (login com Unidade travada) ou ao atualizar a página (F5 / botão Atualizar, que restaura os
+   filtros), nenhum 'change' é disparado pelo usuário. Então o aviso é exibido na primeira renderização
+   com dados da tela Entregas em que houver Unidade (escolhida ou travada) e Operação = NORMAL. */
 let _dueLockDone = false, _dueLockTimer = null, _dueLockTries = 0;
 function _dueLockTick(){
-  if(_dueLockDone || !window.__unitLock) return;
+  if(_dueLockDone) return;
   clearTimeout(_dueLockTimer);
   _dueLockTimer = setTimeout(()=>{
     if(_dueLockDone) return;
     const _op = document.getElementById('fOperacao');
     if(!_op || _op.value !== 'NORMAL'){ _dueLockTries = 0; return; }   // só com Operação = NORMAL
     const sel = document.getElementById('fUnidade');
+    const _uni = window.__unitLock || (sel ? sel.value : '');
+    if(!_uni){ _dueLockTries = 0; return; }                          // sem Unidade escolhida/travada
     const visible = !!(sel && sel.getBoundingClientRect().width);   // tela Entregas aberta
     if(!visible || !DATA || !DATA.length){
       if(++_dueLockTries < 30) _dueLockTick();                       // tenta de novo (tela/dados ainda carregando)
@@ -6497,7 +6500,7 @@ function _dueLockTick(){
     }
     _dueLockDone = true;
     const n = (PREV_ROWS || []).reduce((acc, r) => acc + (r.idx === 0 ? 1 : 0), 0);
-    if(n > 0) showDueTodayAlert(window.__unitLock, n);
+    if(n > 0) showDueTodayAlert(_uni, n);
   }, 500);
 }
 /* O aviso só é exibido com uma Unidade escolhida (ou travada no login) E Operação = NORMAL. */
