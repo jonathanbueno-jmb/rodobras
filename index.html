@@ -6420,8 +6420,16 @@ FILTER_IDS.forEach(id=>{
    Este listener é registrado DEPOIS do listener acima, então roda após o render(). */
 let _dueTimer = null;
 function _armDue(){ clearTimeout(_dueTimer); _dueTimer = setTimeout(hideDueTodayAlert, 12000); }
+let _dueWaitT = null;
+/* Processamento em andamento (overlay "Atualizando/Processando..." ou botão Atualizar girando):
+   o aviso fica na fila e só abre depois, para não cobrir a tela de carregamento nem bloquear cliques. */
+function _dueBusy(){
+  const ov = document.getElementById('overlay');
+  const rb = document.getElementById('refreshBtn');
+  return !!((ov && ov.classList.contains('show')) || (rb && (rb.disabled || rb.classList.contains('spinning'))));
+}
 function hideDueTodayAlert(){
-  clearTimeout(_dueTimer);
+  clearTimeout(_dueTimer); clearTimeout(_dueWaitT);
   const a = document.getElementById('dueTodayAlert');
   if(a) a.classList.remove('show');
 }
@@ -6433,7 +6441,16 @@ function goToPrevCard(){
   card.classList.remove('prev-card-flash'); void card.offsetWidth; card.classList.add('prev-card-flash');
   setTimeout(()=>card.classList.remove('prev-card-flash'), 3000);
 }
-function showDueTodayAlert(unidade, n){
+function showDueTodayAlert(unidade, n, _waited){
+  clearTimeout(_dueWaitT);
+  if(_dueBusy()){                                  // ainda processando: tenta de novo em instantes
+    _dueWaitT = setTimeout(()=>showDueTodayAlert(unidade, n, true), 400);
+    return;
+  }
+  if(_waited){                                     // processamento acabou: pequena folga p/ o overlay sumir
+    _dueWaitT = setTimeout(()=>showDueTodayAlert(unidade, n), 400);
+    return;
+  }
   let a = document.getElementById('dueTodayAlert');
   if(!a){
     a = document.createElement('div');
