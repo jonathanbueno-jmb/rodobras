@@ -325,6 +325,25 @@
   .prev-dia.d0{color:#dc2626;background:rgba(220,38,38,.12);}
   body.dark .prev-dia{color:#7FB3FF;background:rgba(127,179,255,.15);}
   body.dark .prev-dia.d0{color:#f87171;background:rgba(248,113,113,.15);}
+  /* Aviso "entregas vencendo hoje" ao trocar a Unidade (ancorado no filtro) + destaque do card */
+  .due-alert{position:absolute;top:0;left:0;z-index:9500;width:min(260px,calc(100vw - 24px));aspect-ratio:1/1;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:18px 16px;background:var(--card);color:var(--text);border:1px solid var(--border);border-left:5px solid #dc2626;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.22);cursor:pointer;visibility:hidden;opacity:0;pointer-events:none;}
+  .due-alert.show{visibility:visible;opacity:1;pointer-events:auto;animation:dueAlertIn .22s ease-out;}
+  @keyframes dueAlertIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+  .due-alert::before{content:'';position:absolute;top:-7px;left:var(--arrow-x,24px);width:12px;height:12px;background:var(--card);border-left:1px solid var(--border);border-top:1px solid var(--border);transform:rotate(45deg);}
+  .due-alert.no-arrow::before{display:none;}
+  .due-alert:hover{border-color:#dc2626;box-shadow:0 14px 36px rgba(220,38,38,.28);}
+  .due-alert:focus-visible{outline:2px solid var(--rodo-blue-light);outline-offset:2px;}
+  .due-alert-ico{flex:none;width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:rgba(220,38,38,.12);color:#dc2626;}
+  .due-alert-ico svg{width:28px;height:28px;}
+  .due-alert-title{font-size:16px;font-weight:600;line-height:1.25;}
+  .due-alert-title b{display:block;color:#dc2626;font-size:46px;font-weight:800;line-height:1;margin:0 0 6px;}
+  .due-alert-sub{margin-top:4px;font-size:12px;line-height:1.35;color:var(--text-soft);}
+  .due-alert-x{position:absolute;top:6px;right:8px;width:28px;height:28px;border:none;border-radius:6px;background:transparent;color:var(--text-soft);font-size:20px;line-height:1;cursor:pointer;}
+  .due-alert-x:hover{background:rgba(127,127,127,.18);color:var(--text);}
+  body.dark .due-alert-title b{color:#f87171;}
+  body.dark .due-alert-ico{color:#f87171;background:rgba(248,113,113,.15);}
+  @keyframes prevCardFlash{0%,100%{box-shadow:var(--shadow);}50%{box-shadow:0 0 0 4px rgba(220,38,38,.55),0 0 22px rgba(220,38,38,.35);}}
+  .card.prev-card-flash{animation:prevCardFlash .95s ease-in-out 3;}
   .card .card-title svg{width:18px;height:18px;color:var(--rodo-blue-2);}
   .card .big{font-size:30px;font-weight:800;color:var(--rodo-blue);line-height:1.1;}
   .card .big-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;}
@@ -5038,6 +5057,7 @@ function render(){
   const elPrevT = getEl('kPrevTitle');
   if(elPrevT) elPrevT.textContent = fmt(prevCount.reduce((a,b)=>a+b,0));
   PREV_ROWS = prevRows;
+  try{ _dueLockTick(); }catch(_){}
 
   /* ====== ENTREGAS EM ABERTO POR FAIXA DE DIAS ====== */
   // Considera apenas Status = EM ABERTO. Usa coluna D = Dias Atraso.
@@ -6392,6 +6412,108 @@ FILTER_IDS.forEach(id=>{
     render();
   });
 });
+
+/* ===== Aviso "entregas vencendo hoje" ao trocar a Unidade =====
+   Ao escolher uma Unidade no filtro, mostra um pop-out ancorado no filtro com a
+   quantidade da linha "Hoje" do card Previsão de Entrega (PREV_ROWS com idx 0, já
+   filtrado pela unidade escolhida). Clicar no aviso leva até o card e o destaca.
+   Este listener é registrado DEPOIS do listener acima, então roda após o render(). */
+let _dueTimer = null;
+function _armDue(){ clearTimeout(_dueTimer); _dueTimer = setTimeout(hideDueTodayAlert, 12000); }
+function hideDueTodayAlert(){
+  clearTimeout(_dueTimer);
+  const a = document.getElementById('dueTodayAlert');
+  if(a) a.classList.remove('show');
+}
+function goToPrevCard(){
+  const t = document.getElementById('kPrevTitle');
+  const card = t && t.closest('.card');
+  if(!card) return;
+  card.scrollIntoView({behavior:'smooth', block:'center'});
+  card.classList.remove('prev-card-flash'); void card.offsetWidth; card.classList.add('prev-card-flash');
+  setTimeout(()=>card.classList.remove('prev-card-flash'), 3000);
+}
+function showDueTodayAlert(unidade, n){
+  let a = document.getElementById('dueTodayAlert');
+  if(!a){
+    a = document.createElement('div');
+    a.id = 'dueTodayAlert'; a.className = 'due-alert';
+    a.setAttribute('role', 'alert'); a.tabIndex = 0;
+    a.title = 'Clique para ver no card Previsão de Entrega';
+    a.innerHTML =
+      '<div class="due-alert-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></div>' +
+      '<div class="due-alert-txt"><div class="due-alert-title"></div><div class="due-alert-sub"></div></div>' +
+      '<button type="button" class="due-alert-x" aria-label="Fechar aviso">&times;</button>';
+    document.body.appendChild(a);
+    const go = ()=>{ hideDueTodayAlert(); goToPrevCard(); };
+    a.addEventListener('click', e=>{ if(e.target.closest('.due-alert-x')) hideDueTodayAlert(); else go(); });
+    a.addEventListener('keydown', e=>{
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); }
+      else if(e.key === 'Escape') hideDueTodayAlert();
+    });
+    a.addEventListener('mouseenter', ()=>clearTimeout(_dueTimer));
+    a.addEventListener('mouseleave', ()=>{ if(a.classList.contains('show')) _armDue(); });
+  }
+  a.querySelector('.due-alert-title').innerHTML = '<b>' + fmt(n) + '</b> ' + (n === 1 ? 'entrega vencendo hoje' : 'entregas vencendo hoje');
+  a.querySelector('.due-alert-sub').textContent = 'Unidade ' + unidade + ' · clique para ver no card Previsão de Entrega';
+  // posiciona logo abaixo do filtro Unidade (mede a origem do bloco de contenção, então
+  // funciona independente de scroll/posicionamento do body)
+  a.classList.remove('show');
+  a.style.left = '0px'; a.style.top = '0px';
+  const sel = document.getElementById('fUnidade');
+  const sr = sel ? sel.getBoundingClientRect() : null;
+  const o = a.getBoundingClientRect();
+  const w = a.offsetWidth, vw = document.documentElement.clientWidth;
+  let wantL, wantT, arrow = null;
+  if(sr && sr.width){
+    wantL = Math.max(12, Math.min(sr.left, vw - w - 12));
+    wantT = sr.bottom + 10;
+    arrow = Math.max(16, Math.min(sr.left + sr.width/2 - wantL - 6, w - 28));
+  } else { wantL = Math.max(12, vw - w - 24); wantT = 110; }
+  const h = a.offsetHeight, vh = document.documentElement.clientHeight;
+  if(wantT + h > vh - 12){ wantT = Math.max(12, vh - h - 12); arrow = null; }
+  a.style.left = (wantL - o.left) + 'px';
+  a.style.top  = (wantT - o.top)  + 'px';
+  a.classList.toggle('no-arrow', arrow === null);
+  if(arrow !== null) a.style.setProperty('--arrow-x', arrow + 'px');
+  a.classList.add('show');
+  _armDue();
+}
+/* Login com Unidade travada: o filtro não dispara 'change' feito pelo usuário, então o aviso
+   é exibido uma vez por sessão, na primeira renderização com dados da tela Entregas. */
+let _dueLockDone = false, _dueLockTimer = null, _dueLockTries = 0;
+function _dueLockTick(){
+  if(_dueLockDone || !window.__unitLock) return;
+  clearTimeout(_dueLockTimer);
+  _dueLockTimer = setTimeout(()=>{
+    if(_dueLockDone) return;
+    const _op = document.getElementById('fOperacao');
+    if(!_op || _op.value !== 'NORMAL'){ _dueLockTries = 0; return; }   // só com Operação = NORMAL
+    const sel = document.getElementById('fUnidade');
+    const visible = !!(sel && sel.getBoundingClientRect().width);   // tela Entregas aberta
+    if(!visible || !DATA || !DATA.length){
+      if(++_dueLockTries < 30) _dueLockTick();                       // tenta de novo (tela/dados ainda carregando)
+      return;
+    }
+    _dueLockDone = true;
+    const n = (PREV_ROWS || []).reduce((acc, r) => acc + (r.idx === 0 ? 1 : 0), 0);
+    if(n > 0) showDueTodayAlert(window.__unitLock, n);
+  }, 500);
+}
+/* O aviso só é exibido com uma Unidade escolhida (ou travada no login) E Operação = NORMAL. */
+function _dueOnFilterChange(){
+  const uni = document.getElementById('fUnidade').value;
+  const op  = document.getElementById('fOperacao').value;
+  const n = (PREV_ROWS || []).reduce((acc, r) => acc + (r.idx === 0 ? 1 : 0), 0);
+  if(uni && op === 'NORMAL' && n > 0){ _dueLockDone = true; showDueTodayAlert(uni, n); }
+  else { _dueLockDone = false; hideDueTodayAlert(); }
+}
+document.getElementById('fUnidade').addEventListener('change', ()=>{
+  if(window.__unitLock) return; // unidade travada (usuário de unidade): não é uma troca feita pelo usuário
+  _dueOnFilterChange();
+});
+document.getElementById('fOperacao').addEventListener('change', _dueOnFilterChange);
+{ const _clr = document.getElementById('clearFiltersBtn'); if(_clr) _clr.addEventListener('click', hideDueTodayAlert); }
 
 /* v49.11: filtro interno do card Top 10 Usuários com Mais Emissão */
 /* v49.12: incluído o filtro de mês interno do card (topUsrMesFilter) */
