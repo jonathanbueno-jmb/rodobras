@@ -4301,6 +4301,11 @@ function getEl(id){
 /* UI util */
 function showOverlay(text){ document.getElementById('overlayText').textContent = text||'Processando...'; document.getElementById('overlay').classList.add('show'); }
 function hideOverlay(){ document.getElementById('overlay').classList.remove('show'); }
+/* Atualização em andamento (botão Atualizar → reload → download → processamento).
+   Fica ligada desde o primeiro instante após o reload e só é desligada quando o processamento termina;
+   assim nenhum aviso aparece na brecha entre as duas etapas. Expira em 3 min por segurança. */
+window.__rbRefreshing = 0;
+try{ if(sessionStorage.getItem('rb_refresh_pending') === '1') window.__rbRefreshing = Date.now(); }catch(_){}
 function toast(msg, type){ const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show ' + (type||''); setTimeout(()=>{ t.className = 'toast '+(type||''); }, 3200); }
 function fmt(n){ if(n===null||n===undefined||isNaN(n)) return '0'; return Number(n).toLocaleString('pt-BR',{maximumFractionDigits:0}); }
 function fmt2(n){ if(n===null||n===undefined||isNaN(n)) return '0'; return Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -6426,7 +6431,8 @@ let _dueWaitT = null;
 function _dueBusy(){
   const ov = document.getElementById('overlay');
   const rb = document.getElementById('refreshBtn');
-  return !!((ov && ov.classList.contains('show')) || (rb && (rb.disabled || rb.classList.contains('spinning'))));
+  const ref = window.__rbRefreshing && (Date.now() - window.__rbRefreshing < 180000);
+  return !!(ref || (ov && ov.classList.contains('show')) || (rb && (rb.disabled || rb.classList.contains('spinning'))));
 }
 function hideDueTodayAlert(){
   clearTimeout(_dueTimer); clearTimeout(_dueWaitT);
@@ -6447,8 +6453,14 @@ function showDueTodayAlert(unidade, n, _waited){
     _dueWaitT = setTimeout(()=>showDueTodayAlert(unidade, n, true), 400);
     return;
   }
-  if(_waited){                                     // processamento acabou: pequena folga p/ o overlay sumir
-    _dueWaitT = setTimeout(()=>showDueTodayAlert(unidade, n), 400);
+  if(_waited){                                     // processamento acabou: folga p/ overlay sumir e a tela terminar de renderizar
+    _dueWaitT = setTimeout(()=>{
+      // os dados mudaram durante a atualização: recontar com o que está na tela agora
+      const uni = document.getElementById('fUnidade').value;
+      const op  = document.getElementById('fOperacao').value;
+      const nn  = (PREV_ROWS || []).reduce((acc, r) => acc + (r.idx === 0 ? 1 : 0), 0);
+      if(uni && op === 'NORMAL' && nn > 0) showDueTodayAlert(uni, nn); else hideDueTodayAlert();
+    }, 1000);
     return;
   }
   let a = document.getElementById('dueTodayAlert');
@@ -7343,6 +7355,7 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
     toast('Falha ao importar: ' + err.message, 'error');
   } finally {
     e.target.value = '';
+    window.__rbRefreshing = 0;   // processamento concluído (ou falhou): libera o aviso
   }
 });
 
@@ -14608,6 +14621,7 @@ async function autoCarregarDados() {
 
   } catch (erro) {
     console.error('[AutoLoad] Falha no auto-carregamento:', erro);
+    window.__rbRefreshing = 0;
     if (overlay) overlay.classList.remove('show');
 
     // Usa o sistema de toast que sua dashboard já possui, como aviso não-bloqueante
