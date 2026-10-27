@@ -206,6 +206,24 @@
   .screen{display:none;}
   .screen.active{display:block;}
 
+  /* NPCT — sub-abas da tela Avaliação */
+  .aval-tabs{display:flex;gap:8px;margin-bottom:16px;}
+  .aval-tab{
+    border:1px solid var(--border);background:var(--card);color:var(--text-soft);
+    border-radius:10px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;
+    box-shadow:var(--shadow);font-family:inherit;
+  }
+  .aval-tab:hover{color:var(--rodo-blue);}
+  .aval-tab.active{background:var(--rodo-blue);color:#fff;border-color:var(--rodo-blue);}
+  .npct-table{min-width:2300px;}
+  .npct-table th,.npct-table td{white-space:nowrap;}
+  .npct-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .npct-count{font-size:12px;color:var(--text-soft);margin:0 0 10px;}
+  .npct-empty{padding:28px;text-align:center;color:var(--text-soft);font-size:14px;}
+  body.dark .npct-table tbody td{border-bottom-color:var(--border);color:var(--text);}
+  body.dark .npct-table tbody tr:nth-child(even){background:rgba(255,255,255,0.03);}
+  body.dark .npct-table tbody tr:hover{background:rgba(255,255,255,0.07);}
+
   /* Cards específicos das telas Coletas / Avaliação */
   .info-card{
     background:var(--card);border-radius:14px;padding:18px;box-shadow:var(--shadow);
@@ -1593,6 +1611,85 @@ textarea.qual-cell{min-height:34px;line-height:1.35;}
   }
   .lg-ops .lg-ops-filter select:focus{border-color:var(--rodo-blue-light);box-shadow:0 0 0 3px rgba(30,120,216,.15);}
   body.dark .lg-ops .lg-ops-filter select{background:#232E42;color:var(--text);border-color:var(--border);}
+  /* ===== TELA TERCEIRIZADA ===== */
+  .terc-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border-radius:14px;padding:14px 18px;box-shadow:var(--shadow);margin-bottom:14px;}
+  .terc-title{display:flex;align-items:center;gap:10px;margin:0;font-size:18px;font-weight:800;letter-spacing:.3px;color:var(--text);}
+  .terc-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .terc-tools select,.terc-btn{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--card);color:var(--text);font-size:14px;font-family:inherit;}
+  .terc-btn{cursor:pointer;font-weight:700;}
+  .terc-btn:hover{border-color:var(--rodo-blue-2);color:var(--rodo-blue-2);}
+  .terc-saved{font-size:12px;color:var(--text-soft);min-width:110px;text-align:right;}
+  .terc-saved.err{color:var(--bad);font-weight:700;}
+  .terc-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px;}
+  .terc-kpi{background:var(--card);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);border-left:4px solid var(--rodo-blue-2);}
+  .terc-kpi .v{font-size:26px;font-weight:800;color:var(--text);line-height:1.1;}
+  .terc-kpi .l{margin-top:4px;font-size:11.5px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.5px;}
+  .terc-kpi.warn{border-left-color:var(--warn);} .terc-kpi.warn .v{color:var(--warn);}
+  .terc-kpi.bad{border-left-color:var(--bad);}  .terc-kpi.bad .v{color:var(--bad);}
+  .terc-kpi.good{border-left-color:var(--good);}
+  .terc-wrap{background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:auto;max-height:72vh;}
+  table.terc{border-collapse:separate;border-spacing:0;width:100%;min-width:1120px;font-size:13px;color:var(--text);}
+  .terc th,.terc td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+  .terc thead th{position:sticky;z-index:3;background:var(--card);height:34px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-soft);}
+  .terc thead tr:nth-child(1) th{top:0;}
+  .terc thead tr:nth-child(2) th{top:34px;}
+  .terc thead th.per{color:var(--rodo-blue-2);font-size:12px;border-bottom:2px solid var(--rodo-blue-2);}
+  .terc .g{border-left:2px solid var(--border);}
+  .terc td.c-day,.terc th.c-day{position:sticky;left:0;z-index:2;background:var(--card);text-align:left;min-width:190px;}
+  .terc thead th.c-day{z-index:5;}
+  .terc td.c-day .wd{margin-left:6px;font-size:11px;font-weight:700;color:var(--text-soft);text-transform:uppercase;}
+  .terc tr.sat td.c-day .wd{color:var(--rodo-accent);}
+  .terc tr.sun{opacity:.5;}
+  .terc tr.today td.c-day{box-shadow:inset 4px 0 0 var(--rodo-accent);}
+  .terc tr.over td:not(.c-day){background:rgba(220,38,38,.07);}
+  .terc tr.over td.c-day{box-shadow:inset 4px 0 0 var(--bad);}
+  .terc-in{width:46px;text-align:center;padding:5px 2px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:13px;font-family:inherit;}
+  .terc-in:focus,.terc-just:focus{outline:none;border-color:var(--rodo-blue-2);box-shadow:0 0 0 2px rgba(0,87,183,.2);}
+  .terc-in:disabled{background:transparent;border-style:dashed;}
+  .terc td.t-tot{font-weight:800;font-size:14px;}
+  .terc-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;}
+  .terc-pill.ok{background:rgba(22,163,74,.14);color:#16a34a;}
+  .terc-pill.warn{background:rgba(245,158,11,.16);color:#d97706;}
+  .terc-pill.bad{background:rgba(220,38,38,.14);color:#dc2626;}
+  .terc-pill.na{background:rgba(148,163,184,.16);color:var(--text-soft);}
+  .terc-just{min-width:200px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:13px;font-family:inherit;}
+  .terc-just:disabled{opacity:.4;}
+  .terc-just.req{border-color:var(--bad);box-shadow:0 0 0 2px rgba(220,38,38,.18);}
+  .terc tfoot td{position:sticky;bottom:0;z-index:2;background:var(--card);font-weight:800;border-top:2px solid var(--border);border-bottom:none;}
+  .terc tfoot td.c-day{z-index:4;}
+  .terc-modal{position:fixed;inset:0;z-index:9000;background:rgba(15,27,45,.6);display:flex;align-items:center;justify-content:center;padding:16px;}
+  .terc-modal[hidden]{display:none;}
+  .terc-modal-box{background:var(--card);color:var(--text);border-radius:14px;box-shadow:var(--shadow-hover,0 10px 28px rgba(0,0,0,.35));padding:22px;width:min(360px,100%);}
+  .terc-modal-box h3{margin:0 0 6px;font-size:17px;}
+  .terc-modal-box p{margin:0 0 14px;font-size:13px;color:var(--text-soft);}
+  .terc-modal-box label{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;font-size:14px;font-weight:600;}
+  .terc-modal-box input{width:80px;text-align:center;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:15px;font-family:inherit;}
+  .terc-modal-box input:focus{outline:none;border-color:var(--rodo-blue-2);box-shadow:0 0 0 2px rgba(0,87,183,.2);}
+  .terc-modal-act{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
+  .terc-gear{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:6px;padding:0;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--text-soft);cursor:pointer;vertical-align:middle;}
+  .terc-gear svg{width:15px;height:15px;}
+  .terc-gear:hover{color:var(--rodo-blue-2);border-color:var(--border);}
+  .terc-gear.custom{color:var(--rodo-accent);}
+  .terc-modal-act .terc-btn[hidden]{display:none;}
+  .terc-btn-pri{background:var(--rodo-blue-2);border-color:var(--rodo-blue-2);color:#fff;}
+  .terc-btn-pri:hover{color:#fff;filter:brightness(1.1);}
+  .terc-apr{width:150px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:13px;font-family:inherit;}
+  .terc-apr:focus{outline:none;border-color:var(--rodo-blue-2);box-shadow:0 0 0 2px rgba(0,87,183,.2);}
+  .terc-apr:disabled{opacity:.4;}
+  .terc-banner{margin:0 0 12px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;background:rgba(245,158,11,.14);color:#b45309;border:1px solid rgba(245,158,11,.35);}
+  .terc-banner[hidden],.terc-btn[hidden]{display:none;}
+  .terc-saved{white-space:nowrap;}
+  .terc-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.4px;vertical-align:middle;}
+  .terc-tag.y{background:var(--rodo-accent);color:#000;}
+  .terc-tag.h{background:rgba(0,87,183,.15);color:var(--rodo-blue-2);}
+  .terc tr.yest td{border-top:2px solid var(--rodo-accent);border-bottom:2px solid var(--rodo-accent);}
+  .terc tr.yest td:not(.c-day){background:rgba(255,180,0,.12);}
+  .terc tr.yest td.c-day{background-image:linear-gradient(rgba(255,180,0,.18),rgba(255,180,0,.18));box-shadow:inset 5px 0 0 var(--rodo-accent);}
+  .terc tr.yest td.c-day b{font-size:14px;}
+  .terc tr.sep td{border-top:3px solid var(--border);}
+  .terc-legend{margin:10px 2px 0;font-size:12px;color:var(--text-soft);}
+  .terc-modal-box input#tercPwd{width:170px;}
+  .terc-pwd-err{min-height:16px;margin:-4px 0 8px;font-size:12.5px;font-weight:700;color:var(--bad);text-align:right;}
 </style>
 <style>#refreshBtn.spinning svg{animation:rbSpin .8s linear infinite}@keyframes rbSpin{to{transform:rotate(360deg)}}#refreshBtn:disabled{opacity:.7;cursor:progress}</style>
 <script>
@@ -1726,6 +1823,11 @@ window.rodoLogoCliente = function(nome){
   <div class="nav-item" data-screen="planejamento">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><polyline points="9 16 11 18 15 14"></polyline></svg>
     Planejamento
+  </div>
+  <hr class="dashed" style="">
+  <div class="nav-item" data-screen="terceirizada">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+   Terceirizada
   </div>
   <hr class="dashed" style="">
   <div class="nav-item active" data-screen="configuracao" id="navConfig">
@@ -1882,7 +1984,7 @@ window.rodoLogoCliente = function(nome){
     <div class="card">
       <div class="card-title"><span class="title-left"><span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="11" rx="1" ry="1"></rect><path d="M15 9h4l3 4v4h-7"></path><circle cx="6" cy="19" r="2"></circle><circle cx="18" cy="19" r="2"></circle></svg></span> Previsão de Entrega</span><span class="title-right title-right-click" id="kPrevTitle" role="button" tabindex="0" title="Clique para ver as entregas que compõem este total">412</span></div>
       <div class="sub" style="margin-top:4px;">
-        <div class="line prev-today"><span>Hoje <span class="preventivo-date" id="kPrevDate0">(25/09)</span></span><b id="kPrev0">179</b></div>
+        <div class="line prev-today"><span>Hoje · sem romaneio <span class="preventivo-date" id="kPrevDate0">(25/09)</span></span><b id="kPrev0">179</b></div>
         <div class="line prev"><span>Amanhã <span class="preventivo-date" id="kPrevDate1">(26/09)</span></span><b id="kPrev1">0</b></div>
         <div class="line prev"><span>Depois de amanhã <span class="preventivo-date" id="kPrevDate2">(27/09)</span></span><b id="kPrev2">0</b></div>
         <div class="line prev"><span>+3 dias <span class="preventivo-date" id="kPrevDate3">(28/09)</span></span><b id="kPrev3">233</b></div>
@@ -3272,6 +3374,11 @@ window.rodoLogoCliente = function(nome){
 <!-- TELA: AVALIAÇÃO -->
 <!-- ============================================================== -->
 <section class="screen" id="screen-avaliacao">
+  <div class="aval-tabs">
+    <button type="button" class="aval-tab active" data-avtab="aval">Avaliação</button>
+    <button type="button" class="aval-tab" data-avtab="npct">NPCT</button>
+  </div>
+  <div id="avalPane">
   <div class="filters">
     <div class="filter-group">
       <label>Mês</label>
@@ -3316,6 +3423,30 @@ window.rodoLogoCliente = function(nome){
     <div class="panel">
       <h3><span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span> Média de Avaliação por Mês</h3>
       <div class="chart-wrap xtall"><canvas id="chartAvalMes" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+    </div>
+  </div>
+  </div>
+
+  <div id="npctPane" style="display:none">
+    <div class="filters">
+      <div class="filter-group"><label>Mês</label><select id="npMes"><option value="">Todos</option></select></div>
+      <div class="filter-group"><label>Ano</label><select id="npAno"><option value="">Todos</option></select></div>
+      <div class="filter-group"><label>Operação</label><select id="npOp"><option value="">Todas</option></select></div>
+      <div class="filter-group"><label>Transportador</label><select id="npTransp"><option value="">Todos</option></select></div>
+      <div class="filter-group clear">
+        <label>&nbsp;</label>
+        <button id="clearNpctBtn" class="btn-clear" title="Limpar todos os filtros">Limpar</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3><span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line></svg></span> NPCT</h3>
+      <div class="npct-count" id="npctCount"></div>
+      <div class="parceiros-table-wrap" style="max-height:640px;overflow:auto;">
+        <table class="parceiros-table npct-table">
+          <thead id="npctHead"></thead>
+          <tbody id="npctBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </section>
@@ -4139,6 +4270,502 @@ window.rodoLogoCliente = function(nome){
 
 
 <!-- ============================================================== -->
+<!-- TELA: TERCEIRIZADA — quadro manual de terceiros por dia/período -->
+<!-- ============================================================== -->
+<section class="screen" id="screen-terceirizada">
+  <div class="terc-head">
+    <h2 class="terc-title">MÃO DE OBRA TERCEIRIZADA</h2>
+    <div class="terc-tools">
+      <button class="terc-btn" id="tercPrev" type="button" title="Mês anterior" aria-label="Mês anterior">‹</button>
+      <select id="tercMes" aria-label="Mês"></select>
+      <select id="tercAno" aria-label="Ano"></select>
+      <button class="terc-btn" id="tercNext" type="button" title="Próximo mês" aria-label="Próximo mês">›</button>
+      <button class="terc-btn" id="tercHoje" type="button">Mês atual</button>
+      <button class="terc-btn" id="tercModo" type="button" title="Alterna entre a lista a partir de ontem e o mês inteiro">Ver mês completo</button>
+      <button class="terc-btn" id="tercSync" type="button" title="Buscar as marcações mais recentes da planilha" hidden>⟳ Sincronizar</button>
+      <span class="terc-saved" id="tercSaved" aria-live="polite"></span>
+    </div>
+  </div>
+
+
+  <div class="terc-banner" id="tercBanner" hidden>⚠ Planilha Google não configurada: as marcações ficam salvas só neste navegador e os outros usuários não as veem.</div>
+
+  <div class="terc-kpis">
+    <div class="terc-kpi"><div class="v" id="tercKpiDias">0 / 0</div><div class="l">Dias preenchidos</div></div>
+    <div class="terc-kpi"><div class="v" id="tercKpiTotal">0</div><div class="l">Total de terceiros no mês</div></div>
+    <div class="terc-kpi" id="tercKpiExcBox"><div class="v" id="tercKpiExc">0</div><div class="l">Dias acima do limite</div></div>
+    <div class="terc-kpi" id="tercKpiPendBox"><div class="v" id="tercKpiPend">0</div><div class="l">Justificativas pendentes</div></div>
+  </div>
+
+  <div class="terc-wrap">
+    <table class="terc" id="tercTable">
+      <thead>
+        <tr>
+          <th class="c-day" rowspan="2">Dia</th>
+          <th class="per g" colspan="3">Manhã</th>
+          <th class="per g" colspan="3">Tarde</th>
+          <th class="per g" colspan="3">Noite</th>
+          <th class="g" rowspan="2">Total</th>
+          <th rowspan="2">Situação</th>
+          <th rowspan="2">Justificativa do excesso</th>
+          <th rowspan="2">Aprovado por</th>
+        </tr>
+        <tr>
+          <th class="g" title="Ajudante de Barracão">AB</th><th title="Ajudante de Entregas">AE</th><th title="Conferente">CF</th>
+          <th class="g" title="Ajudante de Barracão">AB</th><th title="Ajudante de Entregas">AE</th><th title="Conferente">CF</th>
+          <th class="g" title="Ajudante de Barracão">AB</th><th title="Ajudante de Entregas">AE</th><th title="Conferente">CF</th>
+        </tr>
+      </thead>
+      <tbody id="tercBody"></tbody>
+      <tfoot id="tercFoot"></tfoot>
+    </table>
+  </div>
+  <div class="terc-modal" id="tercModal" hidden>
+    <div class="terc-modal-box" role="dialog" aria-modal="true" aria-labelledby="tercModalT">
+      <h3 id="tercModalT">Limite do dia</h3>
+      <p id="tercModalSub">Soma de AB + AE + CF em todos os períodos. Acima do limite, a justificativa é obrigatória.</p>
+      <label>Limite de terceiros<input type="text" inputmode="numeric" maxlength="3" id="tercLimDia"></label>
+      <div class="terc-modal-act">
+        <button class="terc-btn" id="tercLimReset" type="button" title="Voltar ao limite padrão do dia da semana">Restaurar padrão</button>
+        <button class="terc-btn" id="tercLimCancel" type="button">Cancelar</button>
+        <button class="terc-btn terc-btn-pri" id="tercLimSave" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+  <div class="terc-modal" id="tercPwdModal" hidden>
+    <div class="terc-modal-box" role="dialog" aria-modal="true" aria-labelledby="tercPwdT">
+      <h3 id="tercPwdT">Senha necessária</h3>
+      <p>Informe a senha para alterar o limite deste dia.</p>
+      <label>Senha<input type="password" id="tercPwd" autocomplete="new-password" maxlength="60"></label>
+      <div class="terc-pwd-err" id="tercPwdErr" aria-live="polite"></div>
+      <div class="terc-modal-act">
+        <button class="terc-btn" id="tercPwdCancel" type="button">Cancelar</button>
+        <button class="terc-btn terc-btn-pri" id="tercPwdOk" type="button">Confirmar</button>
+      </div>
+    </div>
+  </div>
+  <div class="terc-legend"><b>AB</b> = Ajudante de Barracão &nbsp;•&nbsp; <b>AE</b> = Ajudante de Entregas &nbsp;•&nbsp; <b>CF</b> = Conferente. Use ↑ ↓ ou Enter para pular de dia na mesma coluna.</div>
+</section>
+<script>
+(function(){
+  'use strict';
+  const KEY  = 'rodobras_terceirizada_v1';
+  const JUST = ['Aumento de entrega', 'Movimentação armazém', 'Coleta embarcador'];
+  const PER  = ['m','t','n'];
+  const PERN = {m:'manhã', t:'tarde', n:'noite'};
+  const CARG = ['AB','AE','CF'];
+  const WD   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  let db = {};
+  let ano = 0, mes = 0;          // mês exibido (mes: 1-12)
+  let saveT = null;
+  let modoCompleto = false;   // false = a partir de ontem (mês atual); true = mês inteiro em ordem normal
+  let cleanOK = false;   // só limpa justificativa/aprovação quando o usuário edita o dia (não ao mudar o limite)
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2,'0');
+  const GEAR_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+  const escAttr = v => String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+  try{ const raw = localStorage.getItem(KEY); db = raw ? (JSON.parse(raw) || {}) : {}; }catch(_){ db = {}; }
+
+  /* Limites por DIA (editáveis pela engrenagem de cada linha; o valor não aparece na tabela).
+     Padrão: segunda a sexta = 50, sábado = 54. Só os dias alterados ficam guardados. */
+  const LIM_KEY = 'rodobras_terceirizada_lim_v1';
+  const DEF_UTEIS = 50, DEF_SAB = 54;
+  let lims = {};
+  try{ lims = JSON.parse(localStorage.getItem(LIM_KEY) || '{}') || {}; }catch(_){ lims = {}; }
+  function defLimit(w){ return w === 6 ? DEF_SAB : DEF_UTEIS; }
+  function limitFor(w, date){ if(w === 0) return null; const v = Number(lims[date]); return v > 0 ? v : defLimit(w); }
+  /* ============ SINCRONIZAÇÃO COM A PLANILHA GOOGLE ============
+     Cole abaixo a URL do Web App (Apps Script) que termina em /exec. Veja o arquivo Code.gs.
+     Vazio = modo local (cada navegador guarda só as próprias marcações). */
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwJcjZpv-w-mvmNEm-WS5UNBXGFQTWQBIz93YT74tk1Vu_lC3Y-7Nofn21-MwSwXRxe/exec';
+  const SYNC_MS = 30000;                       // atualização automática enquanto a tela está aberta
+  const PEND_KEY = 'rodobras_terceirizada_pend_v1', MIG_KEY = 'rodobras_terceirizada_migrated_v1';
+  const FIELDS_CELL = ['m_ab','m_ae','m_cf','t_ab','t_ae','t_cf','n_ab','n_ae','n_cf'];
+  let dirty = {};                              // { 'AAAA-MM-DD': {campo:1} } alterações ainda não enviadas
+  try{ dirty = JSON.parse(localStorage.getItem(PEND_KEY) || '{}') || {}; }catch(_){ dirty = {}; }
+  let inflight = 0, pulling = false, flushT = null, retryT = null, syncErr = false;
+
+  function persistLocal(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify(db));
+      localStorage.setItem(LIM_KEY, JSON.stringify(lims));
+      localStorage.setItem(PEND_KEY, JSON.stringify(dirty));
+      return true;
+    }catch(_){ return false; }
+  }
+  function who(){
+    try{
+      const raw = sessionStorage.getItem('rodobras_session_v24') || localStorage.getItem('rodobras_session_v24');
+      const o = raw ? JSON.parse(raw) : null; return (o && o.login) ? String(o.login) : '';
+    }catch(_){ return ''; }
+  }
+  function setStatus(kind){
+    const el = $('tercSaved'); if(!el) return;
+    const d = new Date(), hm = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    el.className = 'terc-saved';
+    if(kind === 'local') el.textContent = '✓ Salvo neste navegador';
+    else if(kind === 'saving') el.textContent = 'Salvando na planilha…';
+    else if(kind === 'ok') el.textContent = '✓ Sincronizado às ' + hm;
+    else if(kind === 'err'){ el.className = 'terc-saved err'; el.textContent = '⚠ Sem conexão com a planilha. Tentando de novo…'; }
+    else if(kind === 'errpull'){ el.className = 'terc-saved err'; el.textContent = '⚠ Não foi possível ler a planilha'; }
+    else if(kind === 'errlocal'){ el.className = 'terc-saved err'; el.textContent = 'Não foi possível salvar'; }
+  }
+  function fieldVal(date, f){
+    const r = db[date];
+    if(f === 'lim') return lims[date] > 0 ? lims[date] : '';
+    if(f === 'j') return (r && r.j) || '';
+    if(f === 'a') return (r && r.a) || '';
+    return cellVal(r, f[0], ['ab','ae','cf'].indexOf(f.slice(2)));
+  }
+  /* Registra que campos de um dia mudaram; o envio é agrupado (só os campos alterados vão para a planilha) */
+  function touch(date, fields){
+    const d = dirty[date] || (dirty[date] = {});
+    fields.forEach(f => d[f] = 1);
+    if(!persistLocal()) setStatus('errlocal');
+    clearTimeout(flushT);
+    if(API_URL) setStatus('saving');
+    flushT = setTimeout(flush, API_URL ? 700 : 150);
+  }
+  async function flush(){
+    clearTimeout(flushT);
+    if(!API_URL){ dirty = {}; if(persistLocal()) setStatus('local'); return; }
+    if(inflight) return;
+    const dates = Object.keys(dirty); if(!dates.length) return;
+    const snapshot = dirty; dirty = {};
+    const changes = dates.map(date => {
+      const fields = {}; Object.keys(snapshot[date]).forEach(f => fields[f] = fieldVal(date, f));
+      return {date: date, fields: fields};
+    });
+    inflight = 1; setStatus('saving');
+    let ok = false;
+    try{
+      const resp = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, keepalive:true,
+                                         body: JSON.stringify({action:'save', user: who(), changes: changes})});
+      const j = await resp.json();
+      if(!j || !j.ok) throw new Error((j && j.error) || 'resposta inválida');
+      ok = true; syncErr = false; setStatus('ok');
+    }catch(err){
+      console.warn('[Terceirizada] falha ao salvar na planilha:', err);
+      dates.forEach(date => { const d = dirty[date] || (dirty[date] = {}); Object.keys(snapshot[date]).forEach(f => d[f] = 1); });
+      syncErr = true; setStatus('err');
+      clearTimeout(retryT); retryT = setTimeout(flush, 15000);
+    }finally{
+      inflight = 0; persistLocal();
+      if(ok && Object.keys(dirty).length) flush();
+    }
+  }
+  function setRemoteField(ndb, nlims, date, f, v){
+    if(f === 'lim'){ if(v > 0) nlims[date] = v; else delete nlims[date]; return; }
+    const r = ndb[date] || (ndb[date] = {m:['','',''], t:['','',''], n:['','','']});
+    if(f === 'j'){ if(v) r.j = v; else delete r.j; }
+    else if(f === 'a'){ if(v) r.a = v; else delete r.a; }
+    else r[f[0]][['ab','ae','cf'].indexOf(f.slice(2))] = v;
+  }
+  function applyRemote(rows){
+    const ndb = {}, nlims = {}, seen = new Set();
+    rows.forEach(row => {
+      const date = row && row.date; if(!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return;
+      seen.add(date);
+      const rec = {m:['','',''], t:['','',''], n:['','','']};
+      FIELDS_CELL.forEach(f => { const v = row[f]; rec[f[0]][['ab','ae','cf'].indexOf(f.slice(2))] = (v === '' || v == null) ? '' : Number(v); });
+      if(row.j) rec.j = String(row.j);
+      if(row.a) rec.a = String(row.a);
+      if(isFilled(rec) || rec.j || rec.a) ndb[date] = rec;
+      if(Number(row.lim) > 0) nlims[date] = Number(row.lim);
+    });
+    /* migração única: marcações que já existiam só neste navegador sobem para a planilha */
+    let migrated = false;
+    try{ migrated = !!localStorage.getItem(MIG_KEY); }catch(_){}
+    if(!migrated){
+      Object.keys(db).forEach(date => { if(seen.has(date)) return;
+        const d = dirty[date] || (dirty[date] = {});
+        FIELDS_CELL.concat(['j','a']).forEach(f => { if(fieldVal(date, f) !== '') d[f] = 1; });
+      });
+      Object.keys(lims).forEach(date => { if(seen.has(date)) return; (dirty[date] || (dirty[date] = {})).lim = 1; });
+      try{ localStorage.setItem(MIG_KEY, '1'); }catch(_){}
+    }
+    /* o que o usuário alterou aqui e ainda não foi enviado prevalece sobre a planilha */
+    const keep = [];
+    Object.keys(dirty).forEach(date => Object.keys(dirty[date]).forEach(f => keep.push([date, f, fieldVal(date, f)])));
+    keep.forEach(k => setRemoteField(ndb, nlims, k[0], k[1], k[2]));
+    Object.keys(ndb).forEach(date => { const r = ndb[date]; if(!isFilled(r) && !r.j && !r.a) delete ndb[date]; });
+    const changed = JSON.stringify(ndb) !== JSON.stringify(db) || JSON.stringify(nlims) !== JSON.stringify(lims);
+    db = ndb; lims = nlims;
+    persistLocal();
+    if(changed) refreshDom();
+    if(Object.keys(dirty).length) flush();
+  }
+  async function pull(){
+    if(!API_URL || pulling || inflight) return;
+    pulling = true;
+    try{
+      const resp = await fetch(API_URL + (API_URL.indexOf('?') > -1 ? '&' : '?') + 'action=list&t=' + Date.now(), {cache:'no-store'});
+      const j = await resp.json();
+      if(!j || !j.ok) throw new Error((j && j.error) || 'resposta inválida');
+      applyRemote(j.rows || []);
+      syncErr = false;
+      setStatus(Object.keys(dirty).length ? 'saving' : 'ok');
+    }catch(err){
+      console.warn('[Terceirizada] falha ao ler a planilha:', err);
+      syncErr = true; setStatus('errpull');
+    }finally{ pulling = false; }
+  }
+  /* Atualiza a tela com os dados novos sem recriar a tabela (não tira o foco de quem está digitando) */
+  function refreshDom(){
+    document.querySelectorAll('#tercBody tr').forEach(tr => {
+      const date = tr.dataset.date, r = db[date];
+      tr.querySelectorAll('.terc-in').forEach(inp => { if(inp !== document.activeElement) inp.value = cellVal(r, inp.dataset.p, Number(inp.dataset.i)); });
+      const apr = tr.querySelector('.terc-apr'); if(apr && apr !== document.activeElement) apr.value = (r && r.a) || '';
+      const g = tr.querySelector('.terc-gear'); if(g) g.classList.toggle('custom', lims[date] > 0);
+      recalcRow(tr);
+    });
+    recalcAll();
+  }
+
+  function cellVal(r, p, i){ const v = r && r[p] ? r[p][i] : ''; return (v === '' || v == null) ? '' : Number(v); }
+  function totalOf(r){ let t = 0; if(!r) return 0; PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') t += v; } }); return t; }
+  function isFilled(r){ return !!r && PER.some(p => [0,1,2].some(i => cellVal(r,p,i) !== '')); }
+
+  const JUST_OPTS = '<option value="">Selecione o motivo…</option>' + JUST.map(j => '<option value="'+j+'">'+j+'</option>').join('');
+
+  function fillSelectors(){
+    const sm = $('tercMes'), sa = $('tercAno');
+    if(!sm.options.length) sm.innerHTML = MESES.map((n,i)=>'<option value="'+(i+1)+'">'+n+'</option>').join('');
+    const cur = new Date().getFullYear();
+    const lo = Math.min(cur - 2, ano), hi = Math.max(cur + 2, ano);
+    let h = ''; for(let y = lo; y <= hi; y++) h += '<option value="'+y+'">'+y+'</option>';
+    sa.innerHTML = h;
+    sm.value = String(mes); sa.value = String(ano);
+  }
+
+  function render(){
+    const body = $('tercBody'); if(!body) return;
+    if(!ano){ const n = new Date(); ano = n.getFullYear(); mes = n.getMonth() + 1; }
+    fillSelectors();
+    const _n = new Date(), _atual = (ano === _n.getFullYear() && mes === _n.getMonth() + 1);
+    $('tercModo').hidden = !_atual;
+    $('tercModo').textContent = modoCompleto ? '↩ A partir de ontem' : 'Ver mês completo';
+    const dim = new Date(ano, mes, 0).getDate();
+    const ymd = (y, m, d) => y + '-' + pad(m) + '-' + pad(d);
+    const hoje = new Date(), hojeKey = ymd(hoje.getFullYear(), hoje.getMonth()+1, hoje.getDate());
+    const ont = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 1);
+    const ontKey = ymd(ont.getFullYear(), ont.getMonth()+1, ont.getDate());
+    /* Mês atual: a lista começa SEMPRE pelo dia anterior ao de hoje e segue em ordem corrida de datas,
+       atravessando a virada do mês (…30/10, 31/10, 01/11, 02/11…), sem voltar ao dia 1 do mesmo mês.
+       Mostra o equivalente a um mês de linhas. O botão "Ver mês completo" mostra o mês em ordem normal. */
+    let ordered = [];
+    if(ano === hoje.getFullYear() && mes === hoje.getMonth() + 1 && !modoCompleto){
+      const fimMes = new Date(ano, mes, 0);
+      const fimJanela = new Date(ont.getFullYear(), ont.getMonth(), ont.getDate() + dim - 1);
+      const fim = fimJanela > fimMes ? fimJanela : fimMes;
+      for(let c = new Date(ont.getFullYear(), ont.getMonth(), ont.getDate()); c <= fim; c.setDate(c.getDate() + 1))
+        ordered.push(ymd(c.getFullYear(), c.getMonth() + 1, c.getDate()));
+    } else {
+      for(let d = 1; d <= dim; d++) ordered.push(ymd(ano, mes, d));
+    }
+    let h = '';
+    ordered.forEach((date, idx) => {
+      const y = Number(date.slice(0,4)), m = Number(date.slice(5,7)), d = Number(date.slice(8));
+      const novoMes = idx > 0 && Number(ordered[idx-1].slice(5,7)) !== m;   // virada de mês: linha separadora
+      const w = new Date(y, m-1, d).getDay();
+      const r = db[date];
+      const cls = (w === 0 ? 'sun' : (w === 6 ? 'sat' : '')) + (date === hojeKey ? ' today' : '') + (date === ontKey ? ' yest' : '') + (novoMes ? ' sep' : '');
+      const tag = date === ontKey ? '<span class="terc-tag y">ONTEM</span>' : (date === hojeKey ? '<span class="terc-tag h">HOJE</span>' : '');
+      h += '<tr data-date="'+date+'" data-w="'+w+'" class="'+cls+'"><td class="c-day"><b>'+pad(d)+'</b>/'+pad(m)+'<span class="wd">'+WD[w]+'</span>'+tag+(w === 0 ? '' : '<button type="button" class="terc-gear'+(lims[date] > 0 ? ' custom' : '')+'" title="Editar limite deste dia" aria-label="Editar limite do dia '+d+'">'+GEAR_SVG+'</button>')+'</td>';
+      PER.forEach(p=>{
+        for(let i = 0; i < 3; i++){
+          const v = cellVal(r,p,i);
+          h += '<td'+(i===0?' class="g"':'')+'><input class="terc-in" inputmode="numeric" maxlength="3" autocomplete="off" data-p="'+p+'" data-i="'+i+'" value="'+v+'" aria-label="'+CARG[i]+' '+PERN[p]+' dia '+d+'"'+(w===0?' disabled':'')+'></td>';
+        }
+      });
+      h += '<td class="g t-tot"></td><td class="t-st"></td>'
+         + '<td><select class="terc-just" aria-label="Justificativa do excesso dia '+d+'" disabled>'+JUST_OPTS+'</select></td>'
+         + '<td><input class="terc-apr" type="text" maxlength="60" autocomplete="off" placeholder="Nome" aria-label="Aprovado por dia '+d+'" value="'+escAttr((r && r.a) || '')+'" disabled></td></tr>';
+    });
+    body.innerHTML = h;
+    let f = '<tr><td class="c-day">Total exibido</td>';
+    for(let k = 0; k < 9; k++) f += '<td data-f="'+k+'"'+(k%3===0?' class="g"':'')+'>0</td>';
+    f += '<td class="g" data-f="tot">0</td><td data-f="exc"></td><td></td><td></td></tr>';
+    $('tercFoot').innerHTML = f;
+    body.querySelectorAll('tr').forEach(recalcRow);
+    recalcAll();
+    if(API_URL) pull(); else setStatus('local');
+  }
+
+  /* Recalcula total, situação e justificativa de UMA linha (sem recriar os inputs: mantém o foco) */
+  function recalcRow(tr){
+    const date = tr.dataset.date, w = Number(tr.dataset.w), lim = limitFor(w, date);
+    const r = db[date];
+    const tot = totalOf(r), filled = isFilled(r);
+    const totEl = tr.querySelector('.t-tot'), stEl = tr.querySelector('.t-st'), sel = tr.querySelector('.terc-just'), apr = tr.querySelector('.terc-apr');
+    let pill = '<span class="terc-pill na">—</span>', over = false;
+    if(lim === null){ totEl.textContent = '—'; pill = '<span class="terc-pill na">Sem operação</span>'; }
+    else if(!filled){ totEl.textContent = '—'; }
+    else {
+      totEl.textContent = tot;
+      if(tot > lim){ over = true; pill = '<span class="terc-pill bad">+'+(tot-lim)+' acima</span>'; }
+      else pill = '<span class="terc-pill ok">OK</span>';   // abaixo ou igual ao limite
+    }
+    stEl.innerHTML = pill;
+    tr.classList.toggle('over', over);
+    if(over){
+      sel.disabled = false;
+      sel.value = (r && r.j) || '';
+      sel.classList.toggle('req', !sel.value);
+      apr.disabled = false;
+    } else {
+      sel.disabled = true; sel.value = (!cleanOK && r && r.j) ? r.j : ''; sel.classList.remove('req');
+      apr.disabled = true; apr.value = (!cleanOK && r && r.a) ? r.a : '';
+      if(cleanOK && r && (r.j || r.a)){ delete r.j; delete r.a; if(!isFilled(r)) delete db[date]; touch(date, ['j','a']); }   // excesso sumiu: justificativa e aprovação não valem mais
+    }
+  }
+
+  function recalcAll(){
+    /* Indicadores: sempre o MÊS selecionado inteiro (independe das linhas exibidas na janela) */
+    const dim = new Date(ano, mes, 0).getDate();
+    let uteis = 0, preench = 0, total = 0, exc = 0, pend = 0;
+    for(let d = 1; d <= dim; d++){
+      const date = ano + '-' + pad(mes) + '-' + pad(d), w = new Date(ano, mes - 1, d).getDay();
+      const lim = limitFor(w, date); if(lim === null) continue;
+      uteis++;
+      const r = db[date]; if(!isFilled(r)) continue;
+      preench++;
+      const t = totalOf(r); total += t;
+      if(t > lim){ exc++; if(!r.j) pend++; }
+    }
+    $('tercKpiDias').textContent = preench + ' / ' + uteis;
+    $('tercKpiTotal').textContent = total;
+    $('tercKpiExc').textContent = exc;
+    $('tercKpiPend').textContent = pend;
+    $('tercKpiExcBox').className = 'terc-kpi' + (exc ? ' warn' : ' good');
+    $('tercKpiPendBox').className = 'terc-kpi' + (pend ? ' bad' : ' good');
+    /* Rodapé: soma das linhas que estão na tela */
+    const col = new Array(9).fill(0); let tot = 0, excTot = 0;
+    document.querySelectorAll('#tercBody tr').forEach(tr => {
+      const date = tr.dataset.date, lim = limitFor(Number(tr.dataset.w), date), r = db[date];
+      if(lim === null || !isFilled(r)) return;
+      let k = 0;
+      PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') col[k] += v; k++; } });
+      const t = totalOf(r); tot += t; if(t > lim) excTot += (t - lim);
+    });
+    col.forEach((v,k)=>{ const el = document.querySelector('#tercFoot [data-f="'+k+'"]'); if(el) el.textContent = v; });
+    const tt = document.querySelector('#tercFoot [data-f="tot"]'); if(tt) tt.textContent = tot;
+    const ex = document.querySelector('#tercFoot [data-f="exc"]'); if(ex) ex.textContent = excTot ? ('+' + excTot + ' acima') : '';
+  }
+
+  function onInput(inp){
+    const tr = inp.closest('tr'), date = tr.dataset.date;
+    const clean = inp.value.replace(/\D/g,'').slice(0,3);
+    if(clean !== inp.value) inp.value = clean;
+    const r = db[date] || (db[date] = {m:['','',''], t:['','',''], n:['','','']});
+    r[inp.dataset.p][Number(inp.dataset.i)] = clean === '' ? '' : Number(clean);
+    if(!isFilled(r) && !r.j && !r.a) delete db[date];
+    touch(date, [inp.dataset.p + '_' + CARG[Number(inp.dataset.i)].toLowerCase()]); cleanOK = true; try{ recalcRow(tr); }finally{ cleanOK = false; } recalcAll();
+  }
+  function onJust(sel){
+    const tr = sel.closest('tr'), date = tr.dataset.date, r = db[date];
+    if(!r) return;
+    if(sel.value) r.j = sel.value; else delete r.j;
+    sel.classList.toggle('req', !sel.value);
+    touch(date, ['j']); recalcAll();
+  }
+  function moveFocus(inp, dir){
+    const tr = inp.closest('tr'); let n = dir > 0 ? tr.nextElementSibling : tr.previousElementSibling;
+    while(n){
+      const t = n.querySelector('.terc-in[data-p="'+inp.dataset.p+'"][data-i="'+inp.dataset.i+'"]');
+      if(t && !t.disabled){ t.focus(); return; }
+      n = dir > 0 ? n.nextElementSibling : n.previousElementSibling;
+    }
+  }
+
+  const body = $('tercBody');
+  body.addEventListener('input', e => { if(e.target.classList.contains('terc-in')) onInput(e.target); });
+  body.addEventListener('change', e => { if(e.target.classList.contains('terc-just')) onJust(e.target); });
+  body.addEventListener('input', e => {
+    if(!e.target.classList.contains('terc-apr')) return;
+    const date = e.target.closest('tr').dataset.date, r = db[date];
+    if(!r) return;
+    if(e.target.value.trim()) r.a = e.target.value; else delete r.a;
+    touch(date, ['a']);
+  });
+  body.addEventListener('keydown', e => {
+    if(e.target.classList.contains('terc-apr') && e.key === 'Enter'){ e.preventDefault(); e.target.blur(); }
+  });
+  /* janela do limite de um dia */
+  const modal = $('tercModal');
+  let limDate = null;
+  function openLim(tr){
+    limDate = tr.dataset.date;
+    const w = Number(tr.dataset.w), d = Number(limDate.slice(8)), mo = Number(limDate.slice(5,7));
+    $('tercModalT').textContent = 'Limite do dia ' + pad(d) + '/' + pad(mo) + ' (' + WD[w] + ')';
+    $('tercLimDia').value = limitFor(w, limDate);
+    $('tercLimReset').hidden = !(lims[limDate] > 0);
+    modal.hidden = false; $('tercLimDia').focus(); $('tercLimDia').select();
+  }
+  function closeLim(){ modal.hidden = true; limDate = null; }
+  function applyLim(){
+    const tr = document.querySelector('#tercBody tr[data-date="'+limDate+'"]');
+    touch(limDate, ['lim']);
+    if(tr){ tr.querySelector('.terc-gear').classList.toggle('custom', lims[limDate] > 0); recalcRow(tr); }
+    recalcAll(); closeLim();
+  }
+  function saveLim(){
+    const v = parseInt($('tercLimDia').value, 10);
+    if(!(v > 0)){ alert('Informe um limite maior que zero.'); return; }
+    const w = Number(document.querySelector('#tercBody tr[data-date="'+limDate+'"]').dataset.w);
+    if(v === defLimit(w)) delete lims[limDate]; else lims[limDate] = v;   // igual ao padrão: não precisa guardar
+    applyLim();
+  }
+  $('tercLimDia').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,3); });
+  $('tercLimReset').addEventListener('click', ()=>{ delete lims[limDate]; applyLim(); });
+  $('tercLimCancel').addEventListener('click', closeLim);
+  $('tercLimSave').addEventListener('click', saveLim);
+  /* senha para poder editar o limite do dia */
+  const pwdModal = $('tercPwdModal'), pwdInp = $('tercPwd'), pwdErr = $('tercPwdErr');
+  let pwdTr = null;
+  const SENHA_LIMITE = 'terceiro';   // senha para editar o limite diário
+  function askPwd(tr){ pwdTr = tr; pwdInp.value = ''; pwdErr.textContent = ''; pwdModal.hidden = false; pwdInp.focus(); }
+  function closePwd(){ pwdModal.hidden = true; pwdTr = null; pwdInp.value = ''; pwdErr.textContent = ''; }
+  function confirmPwd(){
+    const tr = pwdTr; if(!tr) return;
+    if(pwdInp.value !== SENHA_LIMITE){ pwdErr.textContent = 'Senha incorreta.'; pwdInp.value = ''; pwdInp.focus(); return; }
+    closePwd(); openLim(tr);
+  }
+  $('tercPwdOk').addEventListener('click', confirmPwd);
+  $('tercPwdCancel').addEventListener('click', closePwd);
+  pwdModal.addEventListener('click', e => { if(e.target === pwdModal) closePwd(); });
+  pwdModal.addEventListener('keydown', e => { if(e.key === 'Escape') closePwd(); if(e.key === 'Enter' && e.target === pwdInp){ e.preventDefault(); confirmPwd(); } });
+  body.addEventListener('click', e => { const g = e.target.closest('.terc-gear'); if(g) askPwd(g.closest('tr')); });
+  modal.addEventListener('click', e => { if(e.target === modal) closeLim(); });
+  modal.addEventListener('keydown', e => { if(e.key === 'Escape') closeLim(); if(e.key === 'Enter' && e.target.tagName === 'INPUT') saveLim(); });
+  body.addEventListener('focusin', e => { if(e.target.classList.contains('terc-in')) e.target.select(); });
+  body.addEventListener('keydown', e => {
+    if(!e.target.classList.contains('terc-in')) return;
+    if(e.key === 'ArrowDown' || e.key === 'Enter'){ e.preventDefault(); moveFocus(e.target, 1); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); moveFocus(e.target, -1); }
+  });
+  function shift(delta){ mes += delta; if(mes > 12){ mes = 1; ano++; } if(mes < 1){ mes = 12; ano--; } render(); }
+  $('tercPrev').addEventListener('click', ()=> shift(-1));
+  $('tercNext').addEventListener('click', ()=> shift(1));
+  $('tercHoje').addEventListener('click', ()=>{ const n = new Date(); ano = n.getFullYear(); mes = n.getMonth()+1; render(); });
+  $('tercMes').addEventListener('change', e => { mes = Number(e.target.value); render(); });
+  $('tercAno').addEventListener('change', e => { ano = Number(e.target.value); render(); });
+
+  if(API_URL) $('tercSync').hidden = false; else $('tercBanner').hidden = false;
+  $('tercModo').addEventListener('click', ()=>{ modoCompleto = !modoCompleto; render(); });
+  $('tercSync').addEventListener('click', ()=> pull());
+  setInterval(()=>{ const sc = $('screen-terceirizada'); if(document.hidden || !sc || !sc.classList.contains('active')) return; pull(); }, SYNC_MS);
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) flush(); else { const sc = $('screen-terceirizada'); if(sc && sc.classList.contains('active')) pull(); } });
+  window.addEventListener('online', ()=>{ flush(); pull(); });
+  if(API_URL && Object.keys(dirty).length) flush();          // reenvia o que ficou pendente (ex.: fechou a aba sem rede)
+
+  window.renderTerceirizada = render;
+})();
+</script>
+
+<!-- ============================================================== -->
 <!-- v24: TELA CONFIGURAÇÃO — GERENCIAMENTO DE USUÁRIOS              -->
 <!-- ============================================================== -->
 <section class="screen active" id="screen-configuracao">
@@ -4172,6 +4799,7 @@ window.rodoLogoCliente = function(nome){
           <label class="chk" data-screen="prazos"><input type="checkbox" value="prazos"> Prazos</label>
           <label class="chk" data-screen="qualidade"><input type="checkbox" value="qualidade"> Qualidade</label>
           <label class="chk" data-screen="planejamento"><input type="checkbox" value="planejamento"> Planejamento</label>
+          <label class="chk" data-screen="terceirizada"><input type="checkbox" value="terceirizada"> Terceirizada</label>
           <label class="chk" data-screen="configuracao"><input type="checkbox" value="configuracao"> Usuários</label>
         </div>
         <div class="cfg-actions">
@@ -4318,6 +4946,8 @@ let DATA = [];
 let PREV_ROWS = []; // entregas que compõem o total do card "Previsão de Entrega" (pop-out)
 let DATA_COLETA = [];
 let DATA_AVALIACAO = [];
+let DATA_NPCT = [];
+const NPCT_KEY = 'dataset_npct_v1';
 let DATA_CUSTO = [];
 const COLETA_KEY = 'dataset_coleta_v1';
 const AVAL_KEY = 'dataset_avaliacao_v1';
@@ -4363,6 +4993,7 @@ async function loadInitialData(){
   // Coleta e Avaliação (só após importar uma planilha com essas abas)
   try { const c = await dbGet(COLETA_KEY); if(c && Array.isArray(c)) DATA_COLETA = c; } catch(_){}
   try { const a = await dbGet(AVAL_KEY); if(a && Array.isArray(a)) DATA_AVALIACAO = a; } catch(_){}
+  try { const n = await dbGet(NPCT_KEY); DATA_NPCT = (n && Array.isArray(n) && n.length) ? n : parseNpctAoa(npctDefaultAoa()); } catch(_){ try{ DATA_NPCT = parseNpctAoa(npctDefaultAoa()); }catch(__){ DATA_NPCT = []; } }
   try { const u = await dbGet(CUSTO_KEY); if(u && Array.isArray(u)) DATA_CUSTO = u; } catch(_){}
   // Planejamento: só o que veio da aba "Plano de Ações" do importador; remove o que ficou salvo antes no navegador
   try { localStorage.removeItem('rodobras_plan_pap_v28'); localStorage.removeItem('rodobras_plan_title_v28'); } catch(_){}
@@ -5004,7 +5635,7 @@ function render(){
      Cliente (ufAgg/uniAgg/cliAgg — mesma lógica de aggregateBy), breakdown de
      operação (opStat), unidade emissora (emiUni) e volumes/cubagem/peso. */
   const prevCount = [0,0,0,0];
-  const prevRows = []; // mesmas entregas contadas em prevCount (EM ABERTO + ET em hoje/+3)
+  const prevRows = []; // mesmas entregas contadas em prevCount (EM ABERTO + ET em hoje/+3; hoje só sem romaneio)
   const agingBuckets = [0,0,0,0]; // 1-3, 4-7, 8-15, 16+
   const ufAgg = new Map(), uniAgg = new Map(), cliAgg = new Map();
   const opStat = {};
@@ -5026,7 +5657,9 @@ function render(){
   for(const r of rows){
     // Preventivo (apenas EM ABERTO com Previsão de Entrega) + Aging (apenas EM ABERTO)
     if(r.c === 'EM ABERTO'){
-      if(r.et){ const idx = previstosIso.indexOf(r.et); if(idx !== -1){ prevCount[idx]++; prevRows.push({k:r.k, ci:r.ci, et:r.et, idx:idx}); } }
+      /* Previsão de Entrega: 'Hoje' conta só as que ainda NÃO têm romaneio (coluna Romaneio ≠ SIM);
+         Amanhã, Depois de amanhã e +3 dias seguem a regra original (todas as EM ABERTO com previsão no dia). */
+      if(r.et){ const idx = previstosIso.indexOf(r.et); if(idx !== -1 && (idx !== 0 || r.l !== 'SIM')){ prevCount[idx]++; prevRows.push({k:r.k, ci:r.ci, et:r.et, idx:idx}); } }
       const dias = Number(r.d) || 0;
       if(dias >= 1 && dias <= 3) agingBuckets[0]++;
       else if(dias >= 4 && dias <= 7) agingBuckets[1]++;
@@ -6483,7 +7116,7 @@ function showDueTodayAlert(unidade, n, _waited){
     a.addEventListener('mouseenter', ()=>clearTimeout(_dueTimer));
     a.addEventListener('mouseleave', ()=>{ if(a.classList.contains('show')) _armDue(); });
   }
-  a.querySelector('.due-alert-title').innerHTML = '<b>' + fmt(n) + '</b> ' + (n === 1 ? 'entrega vencendo hoje' : 'entregas vencendo hoje');
+  a.querySelector('.due-alert-title').innerHTML = '<b>' + fmt(n) + '</b> ' + (n === 1 ? 'entrega vencendo hoje sem romaneio' : 'entregas vencendo hoje sem romaneio');
   a.querySelector('.due-alert-sub').textContent = 'Unidade ' + unidade + ' · clique para ver no card Previsão de Entrega';
   // posiciona logo abaixo do filtro Unidade (mede a origem do bloco de contenção, então
   // funciona independente de scroll/posicionamento do body)
@@ -6585,6 +7218,10 @@ async function importJSON(file){
       if(Array.isArray(obj.DATA_AVALIACAO)){
         DATA_AVALIACAO = obj.DATA_AVALIACAO;
         await dbSet(AVAL_KEY, DATA_AVALIACAO);
+      }
+      if(Array.isArray(obj.DATA_NPCT)){
+        DATA_NPCT = obj.DATA_NPCT;
+        await dbSet(NPCT_KEY, DATA_NPCT);
       }
       if(Array.isArray(obj.DATA_CUSTO)){
         DATA_CUSTO = obj.DATA_CUSTO;
@@ -6765,6 +7402,18 @@ document.getElementById('fileInput').addEventListener('change', async (e)=>{
         await dbSet(AVAL_KEY, DATA_AVALIACAO);
       }
     } catch(err){ console.error('Erro aba avaliacao:', err); }
+    // ---- Processa aba NPCT (tela Avaliação > NPCT) ----
+    try {
+      const nSheet = wb.SheetNames.find(n => String(n||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase() === 'npct');
+      if(nSheet){
+        const nArr = XLSX.utils.sheet_to_json(wb.Sheets[nSheet], { header:1, defval:null, blankrows:false });
+        const nOut = parseNpctAoa(nArr);
+        if(nOut.length){
+          DATA_NPCT = nOut;
+          await dbSet(NPCT_KEY, DATA_NPCT);
+        }
+      }
+    } catch(err){ console.error('Erro aba NPCT:', err); }
     // ---- v37: Processa abas RECLAME AQUI (reclame, emi, sul, br) ----
     try {
       const _normSheetName = (n) => String(n||'').toLowerCase()
@@ -7533,7 +8182,7 @@ function exportExcel(){
     } else if(activeScreen === 'coletas'){
       semDados = !DATA_COLETA || !DATA_COLETA.length;
     } else if(activeScreen === 'avaliacao'){
-      semDados = !DATA_AVALIACAO || !DATA_AVALIACAO.length;
+      semDados = (!DATA_AVALIACAO || !DATA_AVALIACAO.length) && (!DATA_NPCT || !DATA_NPCT.length);
     } else if(activeScreen === 'custos'){
       semDados = !DATA_CUSTO || !DATA_CUSTO.length;
     } else {
@@ -7700,6 +8349,10 @@ function exportExcel(){
       if(wsAval){
         XLSX.utils.book_append_sheet(wb, wsAval, 'Avaliação');
         partes.push(`${fmt(DATA_AVALIACAO.length)} avaliações`);
+      }
+      if(DATA_NPCT && DATA_NPCT.length){
+        XLSX.utils.book_append_sheet(wb, npctWorksheet(), 'NPCT');
+        partes.push(`${fmt(DATA_NPCT.length)} linhas NPCT`);
       }
     }
     else if(activeScreen === 'custos'){
@@ -8237,12 +8890,14 @@ function exportJSON(){
           DATA: (DATA||[]).length,
           DATA_COLETA: (DATA_COLETA||[]).length,
           DATA_AVALIACAO: (DATA_AVALIACAO||[]).length,
+          DATA_NPCT: (DATA_NPCT||[]).length,
           DATA_CUSTO: (DATA_CUSTO||[]).length
         }
       },
       DATA: DATA || [],
       DATA_COLETA: DATA_COLETA || [],
       DATA_AVALIACAO: DATA_AVALIACAO || [],
+      DATA_NPCT: DATA_NPCT || [],
       DATA_CUSTO: DATA_CUSTO || [],
       // v37: incluir dados de Reclame Aqui no export
       ...((typeof window.__getReclameData === 'function') ? window.__getReclameData() : {})
@@ -8375,6 +9030,7 @@ document.getElementById('exportBtn').addEventListener('click', openExportModal);
     custos:       'Custos',
     prazos:       'Prazos',
     planejamento: 'Planejamento',
+    terceirizada: 'Terceirizada',
     qualidade:    'Qualidade',
     configuracao: 'Usuários'
   };
@@ -8404,6 +9060,7 @@ document.getElementById('exportBtn').addEventListener('click', openExportModal);
       if(screen === 'prazos') { try{ renderPrazos(); }catch(e){ console.error(e); } }
       if(screen === 'planejamento') { try{ (window.renderPlanejamento && window.renderPlanejamento()); }catch(_){} }
       if(screen === 'qualidade') { try{ (window.renderQualidade && window.renderQualidade()); }catch(_){} }
+      if(screen === 'terceirizada') { try{ (window.renderTerceirizada && window.renderTerceirizada()); }catch(e){ console.error(e); } }
       if(screen === 'configuracao') { try{ renderUsersTable(); }catch(_){} }
     });
   });
@@ -8530,6 +9187,7 @@ function populateAvalFilters(){
     selM.innerHTML = '<option value="">Todos</option>' + meses.map(m => `<option value="${m}">${m.charAt(0).toUpperCase()+m.slice(1)}</option>`).join('');
     if(cur && meses.includes(cur)) selM.value = cur;
   }
+  try{ populateNpctFilters(); }catch(_){}
 }
 
 function avalFilter(){
@@ -8550,6 +9208,7 @@ function applyAvalFilter(rows, f){
 }
 
 function renderAvaliacao(){
+  try{ renderNpct(); }catch(_){}
   const f = avalFilter();
   const filtered = applyAvalFilter(DATA_AVALIACAO, f);
 
@@ -8650,6 +9309,150 @@ document.addEventListener('click', e=>{
     renderAvaliacao();
   }
 });
+
+
+/* ========================================================
+   TELA AVALIAÇÃO > ABA NPCT
+   Dados vêm da aba "NPCT" da planilha importada (mesma importação do restante da dash).
+   Sem aba NPCT na importação, mantém o último dado salvo (ou o conjunto embutido).
+   ======================================================== */
+const NPCT_COLS = [
+  {k:'mes',     h:'MÊS',                      t:'txt'},
+  {k:'cod',     h:'CÓD. TRANSPORTADOR',       t:'txt'},
+  {k:'nome',    h:'NOME COMPACTO',            t:'txt'},
+  {k:'op',      h:'OPERAÇÃO',                 t:'txt'},
+  {k:'ne',      h:'% NE',                     t:'pct'},
+  {k:'ni',      h:'% NI',                     t:'pct'},
+  {k:'nd',      h:'% ND',                     t:'pct'},
+  {k:'ndi',     h:'% NDI',                    t:'pct'},
+  {k:'na',      h:'% NA',                     t:'pct'},
+  {k:'nsp',     h:'% NSP/NPCA',               t:'pct'},
+  {k:'nc',      h:'% NC',                     t:'pct'},
+  {k:'comp',    h:'% Comprovação Posterior',  t:'pct'},
+  {k:'wtc',     h:'% WTC_B2C',                t:'pct'},
+  {k:'extr',    h:'EXTRAVIO',                 t:'pct'},
+  {k:'nps',     h:'% NPS',                    t:'pct'},
+  {k:'trein',   h:'% TREINAMENTO. E.L)',      t:'pct'},
+  {k:'stars',   h:'% 5 STARS',                t:'pct'},
+  {k:'geral',   h:'GERAL',                    t:'pct'},
+  {k:'bonus',   h:'% DE BÔNUS / PENALTI',     t:'pct'},
+  {k:'status',  h:'STATUS',                   t:'mix'},
+  {k:'seguir',  h:'SEGUIR COM A GESTÃO',      t:'txt'},
+  {k:'ano',     h:'Ano',                      t:'txt'}
+];
+const NPCT_MESES = ['JANEIRO','FEVEREIRO','MARCO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+function _npctNorm(v){ return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase(); }
+function _npctMesIdx(m){ return NPCT_MESES.indexOf(_npctNorm(m).toUpperCase()); }
+/* Percentuais: aceita fração (0,97) e também escala 0-100 (97) — normaliza para fração */
+function _npctPct(v){
+  if(typeof v === 'number' && isFinite(v)) return v > 1.5 ? v/100 : v;
+  if(v == null) return '';
+  const t = String(v).trim();
+  if(/^-?[\d.,]+%?$/.test(t)){
+    let n = parseFloat(t.replace('%','').replace(/\./g,'').replace(',','.'));
+    if(isFinite(n)) return (t.includes('%') || n > 1.5) ? n/100 : n;
+  }
+  return t;
+}
+function parseNpctAoa(aoa){
+  if(!Array.isArray(aoa) || aoa.length < 2) return [];
+  const hdr = (aoa[0]||[]).map(_npctNorm);
+  const idx = NPCT_COLS.map((c,i)=>{ const j = hdr.indexOf(_npctNorm(c.h)); return j >= 0 ? j : i; });
+  const out = [];
+  for(let r=1; r<aoa.length; r++){
+    const row = aoa[r]; if(!row) continue;
+    const o = {};
+    NPCT_COLS.forEach((c,i)=>{
+      let v = row[idx[i]];
+      if(v === undefined || v === null) v = '';
+      if(c.t === 'pct') v = _npctPct(v);
+      else if(c.t === 'mix') v = (typeof v === 'number') ? _npctPct(v) : String(v).trim();
+      else v = String(v).trim();
+      o[c.k] = v;
+    });
+    if(!o.mes && !o.nome && !o.cod) continue;
+    if(o.mes){ const t = o.mes.toLowerCase(); o.mes = t.charAt(0).toUpperCase() + t.slice(1); }
+    out.push(o);
+  }
+  return out;
+}
+function _npctFmt(v, t){
+  if(v === '' || v == null) return '';
+  if(typeof v === 'number') return (v*100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + '%';
+  return String(v).replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+}
+function npctFilter(){
+  const g = id => { const e = document.getElementById(id); return e ? e.value : ''; };
+  return { mes:g('npMes'), ano:g('npAno'), op:g('npOp'), tr:g('npTransp') };
+}
+function populateNpctFilters(){
+  const fill = (id, vals, first) => {
+    const el = document.getElementById(id); if(!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">'+first+'</option>' + vals.map(v => '<option value="'+String(v).replace(/"/g,'&quot;')+'">'+v+'</option>').join('');
+    if(cur && vals.map(String).includes(cur)) el.value = cur;
+  };
+  const rows = DATA_NPCT || [];
+  const meses = Array.from(new Set(rows.map(r=>r.mes).filter(Boolean))).sort((a,b)=>_npctMesIdx(a)-_npctMesIdx(b));
+  fill('npMes', meses, 'Todos');
+  fill('npAno', Array.from(new Set(rows.map(r=>r.ano).filter(Boolean))).sort(), 'Todos');
+  fill('npOp',  Array.from(new Set(rows.map(r=>r.op).filter(Boolean))).sort(), 'Todas');
+  fill('npTransp', Array.from(new Set(rows.map(r=>r.cod).filter(Boolean))).sort(), 'Todos');
+}
+function renderNpct(){
+  const head = document.getElementById('npctHead'), body = document.getElementById('npctBody');
+  if(!head || !body) return;
+  head.innerHTML = '<tr>' + NPCT_COLS.map(c => '<th'+(c.t==='pct'?' class="num"':'')+'>'+c.h+'</th>').join('') + '</tr>';
+  const f = npctFilter();
+  const rows = (DATA_NPCT||[]).filter(r =>
+    (!f.mes || r.mes === f.mes) && (!f.ano || String(r.ano) === f.ano) &&
+    (!f.op || r.op === f.op) && (!f.tr || String(r.cod) === f.tr));
+  const cnt = document.getElementById('npctCount');
+  if(cnt) cnt.textContent = fmt(rows.length) + ' registro(s)';
+  if(!rows.length){
+    body.innerHTML = '<tr><td colspan="'+NPCT_COLS.length+'" class="npct-empty">Nenhum dado NPCT. Importe uma planilha que contenha a aba "NPCT".</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map(r => '<tr>' + NPCT_COLS.map(c => {
+    const isNum = c.t === 'pct' || (c.t === 'mix' && typeof r[c.k] === 'number');
+    return '<td'+(isNum?' class="num"':'')+'>'+_npctFmt(r[c.k], c.t)+'</td>';
+  }).join('') + '</tr>').join('');
+}
+/* Worksheet para exportação Excel (percentuais com formato %) */
+function npctWorksheet(){
+  const aoa = [NPCT_COLS.map(c=>c.h)];
+  (DATA_NPCT||[]).forEach(r => aoa.push(NPCT_COLS.map(c => r[c.k] === undefined ? '' : r[c.k])));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  for(let R=1; R<aoa.length; R++){
+    NPCT_COLS.forEach((c,C)=>{
+      const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
+      if(cell && cell.t === 'n' && (c.t === 'pct' || c.t === 'mix')) cell.z = '0.00%';
+    });
+  }
+  ws['!cols'] = NPCT_COLS.map(c=>({ wch: Math.max(12, c.h.length+2) }));
+  return ws;
+}
+/* Sub-abas Avaliação | NPCT e filtros */
+document.addEventListener('click', e=>{
+  const t = e.target.closest ? e.target.closest('.aval-tab') : null;
+  if(t){
+    const which = t.getAttribute('data-avtab');
+    document.querySelectorAll('.aval-tab').forEach(b => b.classList.toggle('active', b === t));
+    const pa = document.getElementById('avalPane'), pn = document.getElementById('npctPane');
+    if(pa) pa.style.display = (which === 'npct') ? 'none' : '';
+    if(pn) pn.style.display = (which === 'npct') ? '' : 'none';
+    if(which === 'npct'){ try{ renderNpct(); }catch(_){} } else { try{ renderAvaliacao(); }catch(_){} }
+    return;
+  }
+  if(e.target && e.target.id === 'clearNpctBtn'){
+    ['npMes','npAno','npOp','npTransp'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    renderNpct();
+  }
+});
+['npMes','npAno','npOp','npTransp'].forEach(id=>{
+  document.addEventListener('change', e=>{ if(e.target && e.target.id === id) renderNpct(); });
+});
+function npctDefaultAoa(){ return [["MÊS","CÓD. TRANSPORTADOR","NOME COMPACTO","OPERAÇÃO","% NE","% NI","% ND","% NDI","% NA","% NSP/NPCA","% NC","% Comprovação Posterior","% WTC_B2C","extravio ","% NPS","% TREINAMENTO. E.L)","% 5 STARS","GERAL ","% DE BÔNUS / PENALTI","STATUS","SEGUIR COM A GESTÃO","Ano"],["JANEIRO",5002836,"RODOBRÁS","1T",1,1,1,1,1,0.99,null,1,null,null,null,null,null,0.9995,0.03,"NÃO","SIM",2026],["JANEIRO",5002836,"RODOBRÁS","PP",0.9335,0.968,1,1,1,1,null,1,1,0.9955,1,1,0.958,0.9774,0.01,"SIM","NÃO",2026],["JANEIRO",5003024,"RODOBRÁS","PP",0.9681,0.9787,1,1,1,1,null,1,1,0.6731,1,1,0.89,0.9426,0.01,"NÃO","SIM",2026],["JANEIRO",5003024,"RODOBRÁS","PEÇAS",0.9866,0.9842,0.7397,0.8933,null,0.99,0.9355,1,"xx","xx","x",1,"x",0.9559,0,"SIM","SIM",2026],["JANEIRO",5001929,"RODOBRÁS","PP",0.9411,0.9823,0.99,0.99,1,1,null,1,1,0.999,1,1,0.956,0.9783,0.01,"SIM","NÃO",2026],["JANEIRO",5003133,"RODOBRÁS","PP",0.9417,0.9686,1,1,1,1,null,1,1,0.9982,1,1,0.954,0.9787,0.01,"SIM","NÃO",2026],["JANEIRO",5003024,"RODOBRÁS","1T",1,1,1,1,1,0.99,null,1,null,null,null,null,null,0.9995,0.03,"NÃO","SIM",2026],["FEVEREIRO",5002836,"RODOBRÁS","PP",0.9684,0.9934,0.58,0.71,1,0.993,null,1,1,0.997,1,1,0.954,0.9148,0.03,"SIM","SIM",2026],["FEVEREIRO",5003024,"RODOBRÁS","PEÇAS",0.9883,0.9867,0.8632,0.9438,null,0.97,0.9594,1,"xx","xx","x",1,"x",0.9724,0.005,"SIM","SIM",2026],["FEVEREIRO",5001929,"RODOBRÁS","PP",0.9722,0.9996,0.75,0.88,1,0.995,null,1,1,0.9985,1,1,0.962,0.9516,0,"SIM","SIM",2026],["FEVEREIRO",5003133,"RODOBRÁS","PP",0.997,0.9975,0.72,0.84,1,0.996,null,1,1,0.9987,1,1,0.946,0.9468,0.005,"SIM","SIM",2026],["MARÇO",5002836,"RODOBRÁS","PP",0.9706,0.9813,0.7,0.81,1,0.9926,null,1,1,1,1,1,0.95,0.9358,0.9358,0.015,"SIM",2026],["MARÇO",5003024,"RODOBRÁS","PEÇAS",0.9912,0.9959,0.8923,0.8953,null,0.9699,0.9788,1,"xx","xx","x",1,"x",0.9778,0.9778,0.01,"SIM",2026],["MARÇO",5001929,"RODOBRÁS","PP",0.9814,0.9911,0.81,0.9,1,0.9947,null,1,1,1,1,1,0.97,0.9619,0,"SIM","SIM",2026],["MARÇO",5003133,"RODOBRÁS","PP",0.996,0.9936,0.78,0.87,1,0.9962,null,1,1,1,1,1,0.976,0.9599,0.9599,0,"SIM",2026],["ABRIL",5002836,"RODOBRÁS","PP",0.9771,0.9927,0.86,0.91,1,0.9927,null,1,1,1,1,1,0.948,0.9638,0.9638,0,"SIM",2026],["ABRIL",5003024,"RODOBRÁS","PEÇAS",0.991,0.9974,0.7294,0.8882,null,0.9846,0.9941,1,"xx","xx","x",1,"x",0.9646,0.9646,0,"SIM",2026],["ABRIL",5001929,"RODOBRÁS","PP",0.9886,0.9938,0.85,0.94,1,0.9975,null,1,1,1,1,1,0.96,0.9701,0.005,"SIM","SIM",2026],["ABRIL",5003133,"RODOBRÁS","PP",0.9905,0.9946,0.98,1,1,0.9984,null,1,1,1,1,1,0.96,0.9896,0.9896,0.02,"SIM",2026],["MAIO",5002836,"RODOBRÁS","PP",0.976,0.9827,0.92,0.96,1,1,null,0.9969,1,1,1,1,0.99,0.98,0.98,0.015,"SIM",2026],["MAIO",5003024,"RODOBRÁS","PEÇAS",0.9973,0.9929,0.8782,0.9348,null,0.99,0.9943,0.9753,"xx","xx","x",1,"x",0.9806,0.9806,0.015,"SIM",2026],["MAIO",5001929,"RODOBRÁS","PP",0.9826,0.9857,0.95,0.97,1,1,null,0.9686,1,1,1,1,0.984,0.983,0.015,"SIM","SIM",2026],["MAIO",5003133,"RODOBRÁS","PP",0.9915,0.9831,0.99,0.99,0.963,0.99,null,0.9906,1,1,1,1,0.992,0.9911,0.9911,0.025,"SIM",2026],["Junho ",5002836,"RODOBRÁS","PP",1,0.979,1,100,100,100,null,100,100,99.98,100,100,94,98.95,98.95,2,"SIM",2026],["Junho ",5003024,"RODOBRÁS","PEÇAS",0.9906,0.9888,0.95,0.995,100,99,100,100,"xx","xx","x",100,"x",98.63,98.63,2,"SIM",2026],["Junho ",5001929,"RODOBRÁS","PP",1,0.9858,0.99,0.99,100,100,null,99,100,99.97,100,100,100,99.6,0.03,"SIM","SIM",2026],["Junho ",5003133,"RODOBRÁS","PP",1,97.37,98,1,100,100,null,100,100,99.97,100,100,100,99.53,99.53,3,"SIM",2026]]; }
 
 /* ========================================================
    TELA CUSTOS (aba 'custos' do XLSB — ERP)
@@ -11309,10 +12112,10 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
   const STORAGE_USERS = 'rodobras_users_v24';
   const STORAGE_SESSION = 'rodobras_session_v24';
   // v28.1 HOTFIX: incluído 'planejamento' em ALL_SCREENS e em SCREEN_LABEL
-  const ALL_SCREENS = ['entregas','parceiros','prazos','coletas','avaliacao','reclame','custos','qualidade','planejamento','configuracao'];
+  const ALL_SCREENS = ['entregas','parceiros','prazos','coletas','avaliacao','reclame','custos','qualidade','planejamento','terceirizada','configuracao'];
   const SCREEN_LABEL = {
     entregas:'Entregas', parceiros:'Parceiros', coletas:'Coletas',
-    avaliacao:'Avaliação', reclame:'Reclame Aqui', custos:'Custos', prazos:'Prazos', qualidade:'Qualidade', planejamento:'Planejamento', configuracao:'Usuários'
+    avaliacao:'Avaliação', reclame:'Reclame Aqui', custos:'Custos', prazos:'Prazos', qualidade:'Qualidade', planejamento:'Planejamento', terceirizada:'Terceirizada', configuracao:'Usuários'
   };
 
   // v28.1 HOTFIX: migra usuários e sessão salvos para incluir 'planejamento'
