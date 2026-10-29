@@ -361,7 +361,9 @@
   body.dark .due-alert-title b{color:#f87171;}
   body.dark .due-alert-ico{color:#f87171;background:rgba(248,113,113,.15);}
   @keyframes prevCardFlash{0%,100%{box-shadow:var(--shadow);}50%{box-shadow:0 0 0 4px rgba(220,38,38,.55),0 0 22px rgba(220,38,38,.35);}}
-  .card.prev-card-flash{animation:prevCardFlash .95s ease-in-out 3;}
+  .card.prev-card-flash{animation:prevCardFlash .95s ease-in-out 8;}
+  @keyframes prevTotalFlash{0%,100%{outline:3px solid rgba(220,38,38,0);outline-offset:2px;box-shadow:none;}50%{outline:3px solid #dc2626;outline-offset:2px;box-shadow:0 0 0 5px rgba(220,38,38,.30),0 0 16px rgba(220,38,38,.55);}}
+  .card.prev-card-flash .card-title .title-right-click{border-radius:8px;animation:prevTotalFlash .95s ease-in-out 8;}
   .card .card-title svg{width:18px;height:18px;color:var(--rodo-blue-2);}
   .card .big{font-size:30px;font-weight:800;color:var(--rodo-blue);line-height:1.1;}
   .card .big-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;}
@@ -7085,7 +7087,7 @@ function goToPrevCard(){
   if(!card) return;
   card.scrollIntoView({behavior:'smooth', block:'center'});
   card.classList.remove('prev-card-flash'); void card.offsetWidth; card.classList.add('prev-card-flash');
-  setTimeout(()=>card.classList.remove('prev-card-flash'), 3000);
+  setTimeout(()=>card.classList.remove('prev-card-flash'), 7800);
 }
 function showDueTodayAlert(unidade, n, _waited){
   clearTimeout(_dueWaitT);
@@ -15358,7 +15360,7 @@ const VERSAO_DADOS = '2026-09-09';
 // Last-Modified do servidor NÃO serve para isso: em hospedagem
 // estática ele traz a data do deploy do site, não a do arquivo.
 // Formatos aceitos: 'AAAA-MM-DD HH:MM', 'AAAA-MM-DDTHH:MM' ou 'AAAA-MM-DD'.
-const DATA_ARQUIVO_DADOS = '2026-10-28 11:45';
+const DATA_ARQUIVO_DADOS = '2026-10-29 09:45';
 
 async function autoCarregarDados() {
   const fileInput = document.getElementById('fileInput');
