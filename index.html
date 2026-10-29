@@ -1630,7 +1630,7 @@ textarea.qual-cell{min-height:34px;line-height:1.35;}
   .terc-kpi.bad{border-left-color:var(--bad);}  .terc-kpi.bad .v{color:var(--bad);}
   .terc-kpi.good{border-left-color:var(--good);}
   .terc-wrap{background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:auto;max-height:72vh;}
-  table.terc{border-collapse:separate;border-spacing:0;width:100%;min-width:1120px;font-size:13px;color:var(--text);}
+  table.terc{border-collapse:separate;border-spacing:0;width:100%;min-width:1300px;font-size:13px;color:var(--text);}
   .terc th,.terc td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
   .terc thead th{position:sticky;z-index:3;background:var(--card);height:34px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-soft);}
   .terc thead tr:nth-child(1) th{top:0;}
@@ -1691,6 +1691,9 @@ textarea.qual-cell{min-height:34px;line-height:1.35;}
   .terc tr.sep td{border-top:3px solid var(--border);}
   .terc-legend{margin:10px 2px 0;font-size:12px;color:var(--text-soft);}
   .terc-modal-box input#tercPwd{width:170px;}
+  .terc-modal-box input#tercLimDia{width:130px;}
+  .terc-banner.lock{background:rgba(220,38,38,.10);color:#b91c1c;border-color:rgba(220,38,38,.35);}
+  .terc .t-qty{color:var(--text-soft);font-weight:700;}
   .terc-pwd-err{min-height:16px;margin:-4px 0 8px;font-size:12.5px;font-weight:700;color:var(--bad);text-align:right;}
 </style>
 <style>#refreshBtn.spinning svg{animation:rbSpin .8s linear infinite}@keyframes rbSpin{to{transform:rotate(360deg)}}#refreshBtn:disabled{opacity:.7;cursor:progress}</style>
@@ -4285,6 +4288,7 @@ window.rodoLogoCliente = function(nome){
       <button class="terc-btn" id="tercHoje" type="button">Mês atual</button>
       <button class="terc-btn" id="tercModo" type="button" title="Alterna entre a lista a partir de ontem e o mês inteiro">Ver mês completo</button>
       <button class="terc-btn" id="tercSync" type="button" title="Buscar as marcações mais recentes da planilha" hidden>⟳ Sincronizar</button>
+      <button class="terc-btn" id="tercXls" type="button" title="Exportar para Excel os dados do mês já calculados (exige a senha)">⬇ Exportar Excel</button>
       <span class="terc-saved" id="tercSaved" aria-live="polite"></span>
     </div>
   </div>
@@ -4292,9 +4296,12 @@ window.rodoLogoCliente = function(nome){
 
   <div class="terc-banner" id="tercBanner" hidden>⚠ Planilha Google não configurada: as marcações ficam salvas só neste navegador e os outros usuários não as veem.</div>
 
+  <div class="terc-banner lock" id="tercLock" hidden></div>
+
   <div class="terc-kpis">
     <div class="terc-kpi"><div class="v" id="tercKpiDias">0 / 0</div><div class="l">Dias preenchidos</div></div>
     <div class="terc-kpi"><div class="v" id="tercKpiTotal">0</div><div class="l">Total de terceiros no mês</div></div>
+    <div class="terc-kpi"><div class="v" id="tercKpiValor">R$ 0,00</div><div class="l">Custo total no mês</div></div>
     <div class="terc-kpi" id="tercKpiExcBox"><div class="v" id="tercKpiExc">0</div><div class="l">Dias acima do limite</div></div>
     <div class="terc-kpi" id="tercKpiPendBox"><div class="v" id="tercKpiPend">0</div><div class="l">Justificativas pendentes</div></div>
   </div>
@@ -4307,7 +4314,8 @@ window.rodoLogoCliente = function(nome){
           <th class="per g" colspan="3">Manhã</th>
           <th class="per g" colspan="3">Tarde</th>
           <th class="per g" colspan="3">Noite</th>
-          <th class="g" rowspan="2">Total</th>
+          <th class="g" rowspan="2">Qtd</th>
+          <th rowspan="2">Total (R$)</th>
           <th rowspan="2">Situação</th>
           <th rowspan="2">Justificativa do excesso</th>
           <th rowspan="2">Aprovado por</th>
@@ -4325,8 +4333,11 @@ window.rodoLogoCliente = function(nome){
   <div class="terc-modal" id="tercModal" hidden>
     <div class="terc-modal-box" role="dialog" aria-modal="true" aria-labelledby="tercModalT">
       <h3 id="tercModalT">Limite do dia</h3>
-      <p id="tercModalSub">Soma de AB + AE + CF em todos os períodos. Acima do limite, a justificativa é obrigatória.</p>
-      <label>Limite de terceiros<input type="text" inputmode="numeric" maxlength="3" id="tercLimDia"></label>
+      <p id="tercModalSub">Valor do dia = AB × R$ 141 + AE × R$ 138 + CF × R$ 148, somando todos os períodos. Informe as quantidades para calcular o limite em R$ ou digite o valor direto. Acima do limite, a justificativa é obrigatória.</p>
+      <label>Qtd AB<input type="text" inputmode="numeric" maxlength="3" id="tercQtdAB" class="terc-qtd"></label>
+      <label>Qtd AE<input type="text" inputmode="numeric" maxlength="3" id="tercQtdAE" class="terc-qtd"></label>
+      <label>Qtd CF<input type="text" inputmode="numeric" maxlength="3" id="tercQtdCF" class="terc-qtd"></label>
+      <label>Limite do dia (R$)<input type="text" inputmode="decimal" maxlength="12" id="tercLimDia"></label>
       <div class="terc-modal-act">
         <button class="terc-btn" id="tercLimReset" type="button" title="Voltar ao limite padrão do dia da semana">Restaurar padrão</button>
         <button class="terc-btn" id="tercLimCancel" type="button">Cancelar</button>
@@ -4337,7 +4348,7 @@ window.rodoLogoCliente = function(nome){
   <div class="terc-modal" id="tercPwdModal" hidden>
     <div class="terc-modal-box" role="dialog" aria-modal="true" aria-labelledby="tercPwdT">
       <h3 id="tercPwdT">Senha necessária</h3>
-      <p>Informe a senha para alterar o limite deste dia.</p>
+      <p id="tercPwdSub">Informe a senha para alterar o limite deste dia.</p>
       <label>Senha<input type="password" id="tercPwd" autocomplete="new-password" maxlength="60"></label>
       <div class="terc-pwd-err" id="tercPwdErr" aria-live="polite"></div>
       <div class="terc-modal-act">
@@ -4346,7 +4357,7 @@ window.rodoLogoCliente = function(nome){
       </div>
     </div>
   </div>
-  <div class="terc-legend"><b>AB</b> = Ajudante de Barracão &nbsp;•&nbsp; <b>AE</b> = Ajudante de Entregas &nbsp;•&nbsp; <b>CF</b> = Conferente. Use ↑ ↓ ou Enter para pular de dia na mesma coluna.</div>
+  <div class="terc-legend"><b>AB</b> = Ajudante de Barracão &nbsp;•&nbsp; <b>AE</b> = Ajudante de Entregas &nbsp;•&nbsp; <b>CF</b> = Conferente. Valores: AB R$ 141 • AE R$ 138 • CF R$ 148 por pessoa. Limite: dias úteis R$ 7.027,00 • sábados R$ 7.598,00. Use ↑ ↓ ou Enter para pular de dia na mesma coluna.</div>
 </section>
 <script>
 (function(){
@@ -4373,11 +4384,35 @@ window.rodoLogoCliente = function(nome){
   /* Limites por DIA (editáveis pela engrenagem de cada linha; o valor não aparece na tabela).
      Padrão: segunda a sexta = 50, sábado = 54. Só os dias alterados ficam guardados. */
   const LIM_KEY = 'rodobras_terceirizada_lim_v1';
-  const DEF_UTEIS = 50, DEF_SAB = 54;
+  const DEF_UTEIS = 7027, DEF_SAB = 7598;           // limites em R$ (valor, não quantidade)
+  const RATES = [141, 138, 148];                    // R$ por pessoa: AB, AE, CF
+  const LIM_MIN = 1000;                             // limites antigos (em quantidade, < 1000) são ignorados
   let lims = {};
   try{ lims = JSON.parse(localStorage.getItem(LIM_KEY) || '{}') || {}; }catch(_){ lims = {}; }
   function defLimit(w){ return w === 6 ? DEF_SAB : DEF_UTEIS; }
-  function limitFor(w, date){ if(w === 0) return null; const v = Number(lims[date]); return v > 0 ? v : defLimit(w); }
+  const DEF_QTD_UTEIS = [19, 24, 7], DEF_QTD_SAB = [22, 24, 8];   // quantidades padrão AB, AE, CF
+  const LQ_KEY = 'rodobras_terceirizada_lqty_v1';
+  let lqty = {};
+  try{ lqty = JSON.parse(localStorage.getItem(LQ_KEY) || '{}') || {}; }catch(_){ lqty = {}; }
+  function saveLq(){ try{ localStorage.setItem(LQ_KEY, JSON.stringify(lqty)); }catch(_){} }
+  function sumQtd(q){ return Math.round(q.reduce((t, n, i) => t + (Number(n) || 0) * RATES[i], 0) * 100) / 100; }
+  /* quantidades exibidas no modal: padrão do dia; se o limite foi personalizado, só as que batem com o valor guardado */
+  function qtdFor(w, date){
+    const c = customLim(date);
+    if(!c) return w === 6 ? DEF_QTD_SAB : DEF_QTD_UTEIS;
+    const q = lqty[date];
+    return (q && q.length === 3 && Math.round(sumQtd(q) * 100) === Math.round(c * 100)) ? q : null;
+  }
+  function customLim(date){ const v = Number(lims[date]); return v >= LIM_MIN ? v : 0; }
+  function limitFor(w, date){ if(w === 0) return null; const v = customLim(date); return v > 0 ? v : defLimit(w); }
+  const fmtNum = n => Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const fmtBRL = n => 'R$ ' + fmtNum(n);
+  function parseMoney(x){
+    let t = String(x).replace(/[^\d.,]/g,'');
+    if(t.indexOf(',') > -1) t = t.replace(/\./g,'').replace(',','.');
+    else if(/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g,'');
+    const v = parseFloat(t); return isFinite(v) ? Math.round(v * 100) / 100 : NaN;
+  }
   /* ============ SINCRONIZAÇÃO COM A PLANILHA GOOGLE ============
      Cole abaixo a URL do Web App (Apps Script) que termina em /exec. Veja o arquivo Code.gs.
      Vazio = modo local (cada navegador guarda só as próprias marcações). */
@@ -4417,6 +4452,7 @@ window.rodoLogoCliente = function(nome){
   function fieldVal(date, f){
     const r = db[date];
     if(f === 'lim') return lims[date] > 0 ? lims[date] : '';
+    if(f === 'qab' || f === 'qae' || f === 'qcf'){ const q = lqty[date]; return (lims[date] > 0 && q && q.length === 3) ? Number(q[['qab','qae','qcf'].indexOf(f)]) : ''; }
     if(f === 'j') return (r && r.j) || '';
     if(f === 'a') return (r && r.a) || '';
     return cellVal(r, f[0], ['ab','ae','cf'].indexOf(f.slice(2)));
@@ -4446,27 +4482,32 @@ window.rodoLogoCliente = function(nome){
       const resp = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, keepalive:true,
                                          body: JSON.stringify({action:'save', user: who(), changes: changes})});
       const j = await resp.json();
-      if(!j || !j.ok) throw new Error((j && j.error) || 'resposta inválida');
+      if(!j || !j.ok){ const e = new Error((j && j.error) || 'resposta inválida'); e.serverMsg = (j && j.error) || 'resposta inválida'; throw e; }
       ok = true; syncErr = false; setStatus('ok');
     }catch(err){
       console.warn('[Terceirizada] falha ao salvar na planilha:', err);
       dates.forEach(date => { const d = dirty[date] || (dirty[date] = {}); Object.keys(snapshot[date]).forEach(f => d[f] = 1); });
       syncErr = true; setStatus('err');
+      if(err && err.serverMsg){ const el = $('tercSaved'); if(el) el.textContent = '⚠ A planilha recusou o salvamento: ' + err.serverMsg; }
       clearTimeout(retryT); retryT = setTimeout(flush, 15000);
     }finally{
       inflight = 0; persistLocal();
       if(ok && Object.keys(dirty).length) flush();
     }
   }
-  function setRemoteField(ndb, nlims, date, f, v){
+  function setRemoteField(ndb, nlims, date, f, v, nlq){
     if(f === 'lim'){ if(v > 0) nlims[date] = v; else delete nlims[date]; return; }
+    if(f === 'qab' || f === 'qae' || f === 'qcf'){
+      const i = ['qab','qae','qcf'].indexOf(f), q = nlq[date] || (nlq[date] = ['','','']);
+      q[i] = v; if(q.some(x => x === '' || x == null)) delete nlq[date]; return;
+    }
     const r = ndb[date] || (ndb[date] = {m:['','',''], t:['','',''], n:['','','']});
     if(f === 'j'){ if(v) r.j = v; else delete r.j; }
     else if(f === 'a'){ if(v) r.a = v; else delete r.a; }
     else r[f[0]][['ab','ae','cf'].indexOf(f.slice(2))] = v;
   }
   function applyRemote(rows){
-    const ndb = {}, nlims = {}, seen = new Set();
+    const ndb = {}, nlims = {}, nlq = {}, seen = new Set();
     rows.forEach(row => {
       const date = row && row.date; if(!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return;
       seen.add(date);
@@ -4476,6 +4517,7 @@ window.rodoLogoCliente = function(nome){
       if(row.a) rec.a = String(row.a);
       if(isFilled(rec) || rec.j || rec.a) ndb[date] = rec;
       if(Number(row.lim) > 0) nlims[date] = Number(row.lim);
+      if(Number(row.lim) > 0 && [row.qab, row.qae, row.qcf].every(x => x !== '' && x != null)) nlq[date] = [Number(row.qab), Number(row.qae), Number(row.qcf)];
     });
     /* migração única: marcações que já existiam só neste navegador sobem para a planilha */
     let migrated = false;
@@ -4485,16 +4527,16 @@ window.rodoLogoCliente = function(nome){
         const d = dirty[date] || (dirty[date] = {});
         FIELDS_CELL.concat(['j','a']).forEach(f => { if(fieldVal(date, f) !== '') d[f] = 1; });
       });
-      Object.keys(lims).forEach(date => { if(seen.has(date)) return; (dirty[date] || (dirty[date] = {})).lim = 1; });
+      Object.keys(lims).forEach(date => { if(seen.has(date)) return; { const d = dirty[date] || (dirty[date] = {}); d.lim = 1; if(lqty[date]){ d.qab = 1; d.qae = 1; d.qcf = 1; } } });
       try{ localStorage.setItem(MIG_KEY, '1'); }catch(_){}
     }
     /* o que o usuário alterou aqui e ainda não foi enviado prevalece sobre a planilha */
     const keep = [];
     Object.keys(dirty).forEach(date => Object.keys(dirty[date]).forEach(f => keep.push([date, f, fieldVal(date, f)])));
-    keep.forEach(k => setRemoteField(ndb, nlims, k[0], k[1], k[2]));
+    keep.forEach(k => setRemoteField(ndb, nlims, k[0], k[1], k[2], nlq));
     Object.keys(ndb).forEach(date => { const r = ndb[date]; if(!isFilled(r) && !r.j && !r.a) delete ndb[date]; });
     const changed = JSON.stringify(ndb) !== JSON.stringify(db) || JSON.stringify(nlims) !== JSON.stringify(lims);
-    db = ndb; lims = nlims;
+    db = ndb; lims = nlims; lqty = nlq; saveLq();
     persistLocal();
     if(changed) refreshDom();
     if(Object.keys(dirty).length) flush();
@@ -4520,7 +4562,7 @@ window.rodoLogoCliente = function(nome){
       const date = tr.dataset.date, r = db[date];
       tr.querySelectorAll('.terc-in').forEach(inp => { if(inp !== document.activeElement) inp.value = cellVal(r, inp.dataset.p, Number(inp.dataset.i)); });
       const apr = tr.querySelector('.terc-apr'); if(apr && apr !== document.activeElement) apr.value = (r && r.a) || '';
-      const g = tr.querySelector('.terc-gear'); if(g) g.classList.toggle('custom', lims[date] > 0);
+      const g = tr.querySelector('.terc-gear'); if(g) g.classList.toggle('custom', customLim(date) > 0);
       recalcRow(tr);
     });
     recalcAll();
@@ -4528,6 +4570,19 @@ window.rodoLogoCliente = function(nome){
 
   function cellVal(r, p, i){ const v = r && r[p] ? r[p][i] : ''; return (v === '' || v == null) ? '' : Number(v); }
   function totalOf(r){ let t = 0; if(!r) return 0; PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') t += v; } }); return t; }
+  function valueOf(r){ let t = 0; if(!r) return 0; PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') t += v * RATES[i]; } }); return Math.round(t * 100) / 100; }
+  function isOver(val, lim){ return Math.round((val - lim) * 100) > 0; }
+  /* dias acima do limite e SEM justificativa: enquanto existirem, só eles aceitam novas marcações */
+  function pendingDates(){
+    const out = new Set();
+    Object.keys(db).forEach(date => {
+      const r = db[date]; if(!isFilled(r)) return;
+      const w = new Date(Number(date.slice(0,4)), Number(date.slice(5,7)) - 1, Number(date.slice(8))).getDay();
+      const lim = limitFor(w, date); if(lim === null) return;
+      if(isOver(valueOf(r), lim) && !r.j) out.add(date);
+    });
+    return out;
+  }
   function isFilled(r){ return !!r && PER.some(p => [0,1,2].some(i => cellVal(r,p,i) !== '')); }
 
   const JUST_OPTS = '<option value="">Selecione o motivo…</option>' + JUST.map(j => '<option value="'+j+'">'+j+'</option>').join('');
@@ -4575,21 +4630,21 @@ window.rodoLogoCliente = function(nome){
       const r = db[date];
       const cls = (w === 0 ? 'sun' : (w === 6 ? 'sat' : '')) + (date === hojeKey ? ' today' : '') + (date === ontKey ? ' yest' : '') + (novoMes ? ' sep' : '');
       const tag = date === ontKey ? '<span class="terc-tag y">ONTEM</span>' : (date === hojeKey ? '<span class="terc-tag h">HOJE</span>' : '');
-      h += '<tr data-date="'+date+'" data-w="'+w+'" class="'+cls+'"><td class="c-day"><b>'+pad(d)+'</b>/'+pad(m)+'<span class="wd">'+WD[w]+'</span>'+tag+(w === 0 ? '' : '<button type="button" class="terc-gear'+(lims[date] > 0 ? ' custom' : '')+'" title="Editar limite deste dia" aria-label="Editar limite do dia '+d+'">'+GEAR_SVG+'</button>')+'</td>';
+      h += '<tr data-date="'+date+'" data-w="'+w+'" class="'+cls+'"><td class="c-day"><b>'+pad(d)+'</b>/'+pad(m)+'<span class="wd">'+WD[w]+'</span>'+tag+(w === 0 ? '' : '<button type="button" class="terc-gear'+(customLim(date) > 0 ? ' custom' : '')+'" title="Editar limite deste dia" aria-label="Editar limite do dia '+d+'">'+GEAR_SVG+'</button>')+'</td>';
       PER.forEach(p=>{
         for(let i = 0; i < 3; i++){
           const v = cellVal(r,p,i);
           h += '<td'+(i===0?' class="g"':'')+'><input class="terc-in" inputmode="numeric" maxlength="3" autocomplete="off" data-p="'+p+'" data-i="'+i+'" value="'+v+'" aria-label="'+CARG[i]+' '+PERN[p]+' dia '+d+'"'+(w===0?' disabled':'')+'></td>';
         }
       });
-      h += '<td class="g t-tot"></td><td class="t-st"></td>'
+      h += '<td class="g t-qty"></td><td class="t-tot"></td><td class="t-st"></td>'
          + '<td><select class="terc-just" aria-label="Justificativa do excesso dia '+d+'" disabled>'+JUST_OPTS+'</select></td>'
          + '<td><input class="terc-apr" type="text" maxlength="60" autocomplete="off" placeholder="Nome" aria-label="Aprovado por dia '+d+'" value="'+escAttr((r && r.a) || '')+'" disabled></td></tr>';
     });
     body.innerHTML = h;
     let f = '<tr><td class="c-day">Total exibido</td>';
     for(let k = 0; k < 9; k++) f += '<td data-f="'+k+'"'+(k%3===0?' class="g"':'')+'>0</td>';
-    f += '<td class="g" data-f="tot">0</td><td data-f="exc"></td><td></td><td></td></tr>';
+    f += '<td class="g" data-f="tot">0</td><td data-f="val">R$ 0,00</td><td data-f="exc"></td><td></td><td></td></tr>';
     $('tercFoot').innerHTML = f;
     body.querySelectorAll('tr').forEach(recalcRow);
     recalcAll();
@@ -4600,14 +4655,14 @@ window.rodoLogoCliente = function(nome){
   function recalcRow(tr){
     const date = tr.dataset.date, w = Number(tr.dataset.w), lim = limitFor(w, date);
     const r = db[date];
-    const tot = totalOf(r), filled = isFilled(r);
-    const totEl = tr.querySelector('.t-tot'), stEl = tr.querySelector('.t-st'), sel = tr.querySelector('.terc-just'), apr = tr.querySelector('.terc-apr');
+    const tot = totalOf(r), val = valueOf(r), filled = isFilled(r);
+    const qtyEl = tr.querySelector('.t-qty'), totEl = tr.querySelector('.t-tot'), stEl = tr.querySelector('.t-st'), sel = tr.querySelector('.terc-just'), apr = tr.querySelector('.terc-apr');
     let pill = '<span class="terc-pill na">—</span>', over = false;
-    if(lim === null){ totEl.textContent = '—'; pill = '<span class="terc-pill na">Sem operação</span>'; }
-    else if(!filled){ totEl.textContent = '—'; }
+    if(lim === null){ qtyEl.textContent = '—'; totEl.textContent = '—'; pill = '<span class="terc-pill na">Sem operação</span>'; }
+    else if(!filled){ qtyEl.textContent = '—'; totEl.textContent = '—'; }
     else {
-      totEl.textContent = tot;
-      if(tot > lim){ over = true; pill = '<span class="terc-pill bad">+'+(tot-lim)+' acima</span>'; }
+      qtyEl.textContent = tot; totEl.textContent = fmtBRL(val);
+      if(isOver(val, lim)){ over = true; pill = '<span class="terc-pill bad">Excedeu</span>'; }
       else pill = '<span class="terc-pill ok">OK</span>';   // abaixo ou igual ao limite
     }
     stEl.innerHTML = pill;
@@ -4627,38 +4682,57 @@ window.rodoLogoCliente = function(nome){
   function recalcAll(){
     /* Indicadores: sempre o MÊS selecionado inteiro (independe das linhas exibidas na janela) */
     const dim = new Date(ano, mes, 0).getDate();
-    let uteis = 0, preench = 0, total = 0, exc = 0, pend = 0;
+    let uteis = 0, preench = 0, total = 0, valor = 0, exc = 0, pend = 0;
     for(let d = 1; d <= dim; d++){
       const date = ano + '-' + pad(mes) + '-' + pad(d), w = new Date(ano, mes - 1, d).getDay();
       const lim = limitFor(w, date); if(lim === null) continue;
       uteis++;
       const r = db[date]; if(!isFilled(r)) continue;
       preench++;
-      const t = totalOf(r); total += t;
-      if(t > lim){ exc++; if(!r.j) pend++; }
+      const t = totalOf(r), v = valueOf(r); total += t; valor += v;
+      if(isOver(v, lim)){ exc++; if(!r.j) pend++; }
     }
     $('tercKpiDias').textContent = preench + ' / ' + uteis;
     $('tercKpiTotal').textContent = total;
+    $('tercKpiValor').textContent = fmtBRL(valor);
     $('tercKpiExc').textContent = exc;
     $('tercKpiPend').textContent = pend;
     $('tercKpiExcBox').className = 'terc-kpi' + (exc ? ' warn' : ' good');
     $('tercKpiPendBox').className = 'terc-kpi' + (pend ? ' bad' : ' good');
     /* Rodapé: soma das linhas que estão na tela */
-    const col = new Array(9).fill(0); let tot = 0, excTot = 0;
+    const col = new Array(9).fill(0); let tot = 0, valTot = 0, excTot = 0;
     document.querySelectorAll('#tercBody tr').forEach(tr => {
       const date = tr.dataset.date, lim = limitFor(Number(tr.dataset.w), date), r = db[date];
       if(lim === null || !isFilled(r)) return;
       let k = 0;
       PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') col[k] += v; k++; } });
-      const t = totalOf(r); tot += t; if(t > lim) excTot += (t - lim);
+      const t = totalOf(r), v = valueOf(r); tot += t; valTot += v; if(isOver(v, lim)) excTot += (v - lim);
     });
     col.forEach((v,k)=>{ const el = document.querySelector('#tercFoot [data-f="'+k+'"]'); if(el) el.textContent = v; });
     const tt = document.querySelector('#tercFoot [data-f="tot"]'); if(tt) tt.textContent = tot;
-    const ex = document.querySelector('#tercFoot [data-f="exc"]'); if(ex) ex.textContent = excTot ? ('+' + excTot + ' acima') : '';
+    const vv = document.querySelector('#tercFoot [data-f="val"]'); if(vv) vv.textContent = fmtBRL(valTot);
+    const ex = document.querySelector('#tercFoot [data-f="exc"]'); if(ex) ex.textContent = excTot ? 'Excedeu' : '';
+    /* Trava: com dia acima do limite sem justificativa, só esse(s) dia(s) aceitam marcação */
+    const pset = pendingDates(), lock = $('tercLock');
+    document.querySelectorAll('#tercBody tr').forEach(tr => {
+      const date = tr.dataset.date, sun = Number(tr.dataset.w) === 0, blocked = pset.size > 0 && !pset.has(date);
+      tr.querySelectorAll('.terc-in').forEach(inp => {
+        inp.disabled = sun || blocked;
+        if(blocked && !sun) inp.title = 'Bloqueado: informe a justificativa do dia acima do limite para liberar'; else inp.removeAttribute('title');
+      });
+    });
+    if(lock){
+      if(pset.size){
+        const lst = Array.from(pset).sort().map(d => d.slice(8) + '/' + d.slice(5,7));
+        lock.textContent = '⛔ Marcações em outros dias bloqueadas: selecione a justificativa do excesso de ' + lst.slice(0,4).join(', ') + (lst.length > 4 ? ' e mais ' + (lst.length - 4) : '') + ' para liberar.';
+        lock.hidden = false;
+      } else lock.hidden = true;
+    }
   }
 
   function onInput(inp){
     const tr = inp.closest('tr'), date = tr.dataset.date;
+    { const ps = pendingDates(); if(ps.size && !ps.has(date)){ inp.value = cellVal(db[date], inp.dataset.p, Number(inp.dataset.i)); recalcAll(); return; } }
     const clean = inp.value.replace(/\D/g,'').slice(0,3);
     if(clean !== inp.value) inp.value = clean;
     const r = db[date] || (db[date] = {m:['','',''], t:['','',''], n:['','','']});
@@ -4702,44 +4776,188 @@ window.rodoLogoCliente = function(nome){
     limDate = tr.dataset.date;
     const w = Number(tr.dataset.w), d = Number(limDate.slice(8)), mo = Number(limDate.slice(5,7));
     $('tercModalT').textContent = 'Limite do dia ' + pad(d) + '/' + pad(mo) + ' (' + WD[w] + ')';
-    $('tercLimDia').value = limitFor(w, limDate);
-    $('tercLimReset').hidden = !(lims[limDate] > 0);
+    $('tercLimDia').value = fmtNum(limitFor(w, limDate));
+    { const q = qtdFor(w, limDate); ['AB','AE','CF'].forEach((c, i) => { $('tercQtd' + c).value = q ? q[i] : ''; }); }
+    $('tercLimReset').hidden = !(customLim(limDate) > 0);
     modal.hidden = false; $('tercLimDia').focus(); $('tercLimDia').select();
   }
   function closeLim(){ modal.hidden = true; limDate = null; }
   function applyLim(){
     const tr = document.querySelector('#tercBody tr[data-date="'+limDate+'"]');
-    touch(limDate, ['lim']);
-    if(tr){ tr.querySelector('.terc-gear').classList.toggle('custom', lims[limDate] > 0); recalcRow(tr); }
+    touch(limDate, ['lim','qab','qae','qcf']);
+    if(tr){ tr.querySelector('.terc-gear').classList.toggle('custom', customLim(limDate) > 0); recalcRow(tr); }
     recalcAll(); closeLim();
   }
   function saveLim(){
-    const v = parseInt($('tercLimDia').value, 10);
-    if(!(v > 0)){ alert('Informe um limite maior que zero.'); return; }
+    const v = parseMoney($('tercLimDia').value);
+    if(!(v >= LIM_MIN)){ alert('Informe o limite em R$ (mínimo R$ 1.000,00).'); return; }
     const w = Number(document.querySelector('#tercBody tr[data-date="'+limDate+'"]').dataset.w);
-    if(v === defLimit(w)) delete lims[limDate]; else lims[limDate] = v;   // igual ao padrão: não precisa guardar
+    const qs = ['AB','AE','CF'].map(c => $('tercQtd' + c).value);
+    if(v === defLimit(w)){ delete lims[limDate]; delete lqty[limDate]; }
+    else {
+      lims[limDate] = v;
+      if(qs.every(x => x !== '') && Math.round(sumQtd(qs) * 100) === Math.round(v * 100)) lqty[limDate] = qs.map(Number); else delete lqty[limDate];
+    }
+    saveLq();   // igual ao padrão: não precisa guardar
     applyLim();
   }
-  $('tercLimDia').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,3); });
-  $('tercLimReset').addEventListener('click', ()=>{ delete lims[limDate]; applyLim(); });
+  $('tercLimDia').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^\d.,]/g,'').slice(0,12); });
+  $('tercLimReset').addEventListener('click', ()=>{ delete lims[limDate]; delete lqty[limDate]; saveLq(); applyLim(); });
+  /* digitar as quantidades recalcula o limite em R$; digitar o R$ direto limpa as quantidades */
+  document.querySelectorAll('.terc-qtd').forEach(inp => inp.addEventListener('input', () => {
+    inp.value = inp.value.replace(/\D/g,'').slice(0,3);
+    const qs = ['AB','AE','CF'].map(c => $('tercQtd' + c).value);
+    $('tercLimDia').value = fmtNum(sumQtd(qs));
+  }));
+  $('tercLimDia').addEventListener('input', () => { document.querySelectorAll('.terc-qtd').forEach(i => { i.value = ''; }); });
   $('tercLimCancel').addEventListener('click', closeLim);
   $('tercLimSave').addEventListener('click', saveLim);
   /* senha para poder editar o limite do dia */
   const pwdModal = $('tercPwdModal'), pwdInp = $('tercPwd'), pwdErr = $('tercPwdErr');
-  let pwdTr = null;
-  const SENHA_LIMITE = 'terceiro';   // senha para editar o limite diário
-  function askPwd(tr){ pwdTr = tr; pwdInp.value = ''; pwdErr.textContent = ''; pwdModal.hidden = false; pwdInp.focus(); }
-  function closePwd(){ pwdModal.hidden = true; pwdTr = null; pwdInp.value = ''; pwdErr.textContent = ''; }
+  let pwdTr = null, pwdMode = 'lim';
+  const SENHA_LIMITE = 'terceiro';   // senha para editar o limite diário e para exportar o Excel
+  function askPwd(tr, mode){
+    pwdTr = tr || null; pwdMode = mode || 'lim'; pwdInp.value = ''; pwdErr.textContent = '';
+    $('tercPwdSub').textContent = pwdMode === 'xls' ? 'Informe a senha para exportar os dados para Excel.' : 'Informe a senha para alterar o limite deste dia.';
+    pwdModal.hidden = false; pwdInp.focus();
+  }
+  function closePwd(){ pwdModal.hidden = true; pwdTr = null; pwdMode = 'lim'; pwdInp.value = ''; pwdErr.textContent = ''; }
   function confirmPwd(){
-    const tr = pwdTr; if(!tr) return;
+    const tr = pwdTr, mode = pwdMode;
+    if(mode !== 'xls' && !tr) return;
     if(pwdInp.value !== SENHA_LIMITE){ pwdErr.textContent = 'Senha incorreta.'; pwdInp.value = ''; pwdInp.focus(); return; }
-    closePwd(); openLim(tr);
+    closePwd();
+    if(mode === 'xls') exportXls(); else openLim(tr);
   }
   $('tercPwdOk').addEventListener('click', confirmPwd);
   $('tercPwdCancel').addEventListener('click', closePwd);
   pwdModal.addEventListener('click', e => { if(e.target === pwdModal) closePwd(); });
   pwdModal.addEventListener('keydown', e => { if(e.key === 'Escape') closePwd(); if(e.key === 'Enter' && e.target === pwdInp){ e.preventDefault(); confirmPwd(); } });
-  body.addEventListener('click', e => { const g = e.target.closest('.terc-gear'); if(g) askPwd(g.closest('tr')); });
+  body.addEventListener('click', e => { const g = e.target.closest('.terc-gear'); if(g) askPwd(g.closest('tr'), 'lim'); });
+  $('tercXls').addEventListener('click', () => askPwd(null, 'xls'));
+  /* Exporta o mês selecionado no layout de conferência por equipe (uma linha por função, por dia) */
+  function loadExcelJS(){
+    if(window.ExcelJS) return Promise.resolve();
+    return new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+      s.onload = res; s.onerror = () => rej(new Error('exceljs'));
+      document.head.appendChild(s);
+    });
+  }
+  async function exportXls(){
+    try{ await loadExcelJS(); }catch(_){ alert('A biblioteca de Excel não foi carregada. Verifique a conexão e tente novamente.'); return; }
+    const NAVY = 'FF1F3864', GRID = 'FFBFBFBF', YEL = 'FFFFF2CC';
+    const EQUIPES = ['Ajudante de Barracão (AB)', 'Ajudante de Entregas (AE)', 'Conferente (CF)'];
+    const MONEY = '"R$" #,##0.00';
+    const thin = { style:'thin', color:{ argb: GRID } };
+    const box = { top:thin, left:thin, bottom:thin, right:thin };
+    const dim = new Date(ano, mes, 0).getDate();
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Terceirizada ' + pad(mes) + '-' + ano, { views:[{ state:'frozen', ySplit:1 }] });
+    ws.columns = [11,6,9,27,16,12,13,11,14,14,14,14,15,32,18].map(w => ({ width:w }));
+
+    const heads = ['Data','Dia','Tipo do dia','Equipe (função)','Fornecedor','Previsto (orçamento)','Realizado (presentes)','Diária (R$)','Custo previsto','Custo realizado','Desvio qtd (real − prev.)','Desvio R$ (real − prev.)','Status','Motivo / justificativa do excesso','Aprovado por'];
+    const hr = ws.addRow(heads);
+    hr.height = 46;
+    hr.eachCell(c => {
+      c.font = { name:'Arial', size:10, bold:true, color:{ argb:'FFFFFFFF' } };
+      c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:NAVY } };
+      c.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
+      c.border = { top:thin, left:thin, bottom:thin, right:thin };
+    });
+
+    let sPrev = 0, sReal = 0, sCP = 0, sCR = 0, sDq = 0, sDr = 0;
+    for(let d = 1; d <= dim; d++){
+      const w = new Date(ano, mes - 1, d).getDay();
+      if(w === 0) continue;                                   // domingo: sem operação
+      const date = ano + '-' + pad(mes) + '-' + pad(d), r = db[date];
+      const lim = limitFor(w, date), filled = isFilled(r), q = qtdFor(w, date);
+      const dayOver = filled && lim !== null && isOver(valueOf(r), lim);
+      for(let i = 0; i < 3; i++){
+        const n = ws.rowCount + 1;
+        let real = null;
+        if(filled){ real = 0; PER.forEach(p => { const v = cellVal(r, p, i); if(v !== '') real += v; }); }
+        const prev = q ? q[i] : null, rate = RATES[i];
+        const dq = (prev !== null && real !== null) ? real - prev : null;
+        let status;
+        if(!filled) status = 'Sem lançamento';
+        else if(dq !== null) status = dq > 0 ? 'EXCEDEU' : 'OK';
+        else status = dayOver ? 'EXCEDEU' : 'OK';
+        const exc = status === 'EXCEDEU';
+        const row = ws.addRow([
+          new Date(Date.UTC(ano, mes - 1, d)), WD[w].toLowerCase(), w === 6 ? 'Sábado' : 'Útil', EQUIPES[i], '',
+          prev, real, rate,
+          prev !== null ? { formula:'F'+n+'*H'+n, result:prev*rate } : null,
+          real !== null ? { formula:'G'+n+'*H'+n, result:real*rate } : null,
+          dq !== null ? { formula:'G'+n+'-F'+n, result:dq } : null,
+          dq !== null ? { formula:'K'+n+'*H'+n, result:dq*rate } : null,
+          dq !== null ? { formula:'IF(G'+n+'>F'+n+',"EXCEDEU","OK")', result:status } : status,
+          (exc && dayOver) ? ((r && r.j) || 'PENDENTE') : '',
+          (exc && dayOver) ? ((r && r.a) || '') : ''
+        ]);
+        if(prev !== null){ sPrev += prev; sCP += prev * rate; }
+        if(real !== null){ sReal += real; sCR += real * rate; }
+        if(dq !== null){ sDq += dq; sDr += dq * rate; }
+        row.eachCell({ includeEmpty:true }, (c, col) => {
+          c.font = { name:'Arial', size:10 };
+          c.border = box;
+          c.alignment = { horizontal:'center', vertical:'middle' };
+          if([5,7,14,15].includes(col)) c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:YEL } };
+          if([8,9,10,12].includes(col)){ c.numFmt = MONEY; c.alignment = { horizontal:'right', vertical:'middle' }; }
+          if(col === 1) c.numFmt = 'dd/mm/yyyy';
+          if(col === 6 || col === 7 || col === 11) c.alignment = { horizontal:'right', vertical:'middle' };
+          if(col === 14) c.alignment = { horizontal:'left', vertical:'middle' };
+        });
+        row.getCell(7).font = { name:'Arial', size:10, color:{ argb:'FF0000FF' } };       // realizado: campo de entrada (azul)
+        const st = row.getCell(13);
+        st.alignment = { horizontal:'left', vertical:'middle' };
+        if(exc){
+          st.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFC7CE' } };
+          st.font = { name:'Arial', size:10, bold:true, color:{ argb:'FF9C0006' } };
+        } else if(status === 'OK'){
+          st.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFC6EFCE' } };
+          st.font = { name:'Arial', size:10, bold:true, color:{ argb:'FF006100' } };
+        }
+      }
+    }
+    const last = ws.rowCount;
+    if(last > 1) ws.autoFilter = { from:'A1', to:'O' + last };
+
+    /* linha de total com borda grossa azul-marinho (fechamento da tabela) */
+    const tn = last + 1;
+    const tot = ws.addRow(['Total do mês','','','','',
+      { formula:'SUM(F2:F'+last+')', result:sPrev }, { formula:'SUM(G2:G'+last+')', result:sReal }, '',
+      { formula:'SUM(I2:I'+last+')', result:sCP }, { formula:'SUM(J2:J'+last+')', result:sCR },
+      { formula:'SUM(K2:K'+last+')', result:sDq }, { formula:'SUM(L2:L'+last+')', result:sDr }, '', '', '']);
+    tot.eachCell({ includeEmpty:true }, (c, col) => {
+      c.font = { name:'Arial', size:10, bold:true };
+      c.border = { top:{ style:'medium', color:{ argb:NAVY } }, left:thin, bottom:thin, right:thin };
+      c.alignment = { horizontal: col === 1 ? 'left' : ([9,10,12].includes(col) ? 'right' : 'center'), vertical:'middle' };
+      if([9,10,12].includes(col)) c.numFmt = MONEY;
+    });
+
+    /* aba de apoio com valores e limites */
+    const wt = wb.addWorksheet('Valores e limites');
+    wt.columns = [{ width:30 }, { width:22 }];
+    [['Cargo','Valor por pessoa (R$)'], ['AB - Ajudante de Barracão', RATES[0]], ['AE - Ajudante de Entregas', RATES[1]], ['CF - Conferente', RATES[2]], [],
+     ['Limite padrão','Valor (R$)'], ['Dias úteis (seg a sex)', DEF_UTEIS], ['Sábados', DEF_SAB]].forEach(a => wt.addRow(a));
+    [1, 6].forEach(n => wt.getRow(n).eachCell(c => {
+      c.font = { name:'Arial', size:10, bold:true, color:{ argb:'FFFFFFFF' } };
+      c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:NAVY } };
+      c.alignment = { horizontal:'center', vertical:'middle' };
+    }));
+    [2, 3, 4, 7, 8].forEach(n => { wt.getCell('B' + n).numFmt = MONEY; });
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Terceirizada_' + ano + '-' + pad(mes) + '.xlsx';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
   modal.addEventListener('click', e => { if(e.target === modal) closeLim(); });
   modal.addEventListener('keydown', e => { if(e.key === 'Escape') closeLim(); if(e.key === 'Enter' && e.target.tagName === 'INPUT') saveLim(); });
   body.addEventListener('focusin', e => { if(e.target.classList.contains('terc-in')) e.target.select(); });
