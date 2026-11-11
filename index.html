@@ -4342,7 +4342,7 @@ window.rodoLogoCliente = function(nome){
   <div class="terc-head">
     <h2 class="terc-title">MÃO DE OBRA TERCEIRIZADA</h2>
     <div class="terc-tools">
-      <select id="tercFilial" aria-label="Filial" title="Filial"><option value="CWB">CWB</option><option value="JOI">JOI</option><option value="POA">POA</option></select>
+      <select id="tercFilial" aria-label="Filial" title="Filial"><option value="CWB">CWB</option><option value="JOI">JOI</option><option value="POA">POA</option><option value="GRU">GRU</option></select>
       <button class="terc-btn" id="tercPrev" type="button" title="Mês anterior" aria-label="Mês anterior">‹</button>
       <select id="tercMes" aria-label="Mês"></select>
       <select id="tercAno" aria-label="Ano"></select>
@@ -4452,8 +4452,8 @@ window.rodoLogoCliente = function(nome){
   const DEF_QTD_UTEIS = [19, 24, 7], DEF_QTD_SAB = [22, 24, 8];   // quantidades padrão AB, AE, CF
   const LQ_KEY = 'rodobras_terceirizada_lqty_v1';
   let lqty = {};
-  /* ===== FILIAIS: CWB (dados já existentes, chaves antigas) · JOI · POA ===== */
-  const FILS = ['CWB','JOI','POA'], FIL_KEY = 'rodobras_terceirizada_fil_v1';
+  /* ===== FILIAIS: CWB (dados já existentes, chaves antigas) · JOI · POA · GRU ===== */
+  const FILS = ['CWB','JOI','POA','GRU'], FIL_KEY = 'rodobras_terceirizada_fil_v1';
   let filial = 'CWB';
   try{ const f = localStorage.getItem(FIL_KEY); if(FILS.indexOf(f) > -1) filial = f; }catch(_){}
   const sfx = f => f === 'CWB' ? '' : '_' + f;                       // CWB mantém as chaves antigas do navegador
@@ -14664,7 +14664,7 @@ const VERSAO_DADOS = '2026-09-09';
 // Last-Modified do servidor NÃO serve para isso: em hospedagem
 // estática ele traz a data do deploy do site, não a do arquivo.
 // Formatos aceitos: 'AAAA-MM-DD HH:MM', 'AAAA-MM-DDTHH:MM' ou 'AAAA-MM-DD'.
-const DATA_ARQUIVO_DADOS = '2026-11-10 10:33';
+const DATA_ARQUIVO_DADOS = '2026-11-11 10:19';
 
 async function autoCarregarDados() {
   const fileInput = document.getElementById('fileInput');
@@ -14891,13 +14891,14 @@ function list(w){
     const l=x.lastElementChild;let t=l;
     if(l&&l.classList.contains('val-group'))t=l.querySelector('b,.val')||l;
     const v=t?((t.firstChild&&t.firstChild.nodeType===3)?t.firstChild.textContent:t.textContent).trim():'';
-    return {n:(a?a.textContent:'').replace(/^\s*\d+\.\s*/,'').replace(/\s+/g,' ').trim(),v:v};
+    const pe=x.querySelector('.pct-pill,.pct');
+    return {n:(a?a.textContent:'').replace(/^\s*\d+\.\s*/,'').replace(/\s+/g,' ').trim(),v:v,p:pe?pe.textContent.trim():''};
   });
   if(!rows.length)return null;
   const mx=Math.max.apply(null,rows.map(r=>num(r.v)))||1;
   const d=document.createElement('div');d.className='pw pl';
   d.innerHTML='<h3>'+esc(w.t||ttl(e)||'Ranking')+'</h3><div class="lw">'+rows.map((r,i)=>
-    '<div class="lr"><span class="rk">'+(i+1)+'</span><span class="ln">'+esc(r.n)+'</span><span class="lv">'+esc(r.v)+'</span><i style="width:'+Math.max(2,Math.round(num(r.v)/mx*100))+'%"></i></div>').join('')+'</div>';
+    '<div class="lr"><span class="rk">'+(i+1)+'</span><span class="ln">'+esc(r.n)+'</span><span class="lv">'+esc(r.v)+'</span>'+(r.p&&r.p!==r.v?'<small class="lpc">'+esc(r.p)+'</small>':'')+'<i style="width:'+Math.max(2,Math.round(num(r.v)/mx*100))+'%"></i></div>').join('')+'</div>';
   return d;
 }
 function gauge(){
@@ -15047,14 +15048,20 @@ function genw(w,pend){
     head='<h3>'+esc(tt)+(bd?'<span class="gxb">'+esc(bd)+'</span>':'')+'</h3>',
     d=document.createElement('div'),gw=el.querySelector('.gauge-wrap');
   const chipC=(k,t)=>/bad|danger/.test(k.className||'')?'r':/warn/.test(k.className||'')?'a':(/good|ok|accent/.test(k.className||'')||/^\s*[✓✔]/.test(t))?'g':'';
+  /* 0) blocos especiais: cards de UF, chips do mapa e rankings em <ol> */
+  const ug=el.querySelector('.parceiros-uf-grid[id]');if(ug&&ug.querySelector('.parceiros-uf-card'))return ufcards({id:ug.id,t:tt});
+  const mtb=el.querySelector('.map-card-toolbar[id]');if(mtb&&mtb.querySelector('.uf-chip'))return chips({id:mtb.id,t:tt});
+  const rl=el.querySelector('ol.ranklist[id],ul.ranklist[id]');if(rl&&rl.children.length)return list({id:rl.id,t:tt,n:8});
   /* 1) gráfico */
   const oc=[...el.querySelectorAll('canvas')].filter(c=>!(gw&&gw.contains(c))&&window.Chart&&Chart.getChart(c));
-  if(oc.length&&!el.querySelector('.line')){
+  if(oc.length&&!el.querySelector('.line,.custo-line')){
+    const ov=el.querySelector('[id$="GaugeNum"]');
+    if(ov){const ml=tx(ov.nextElementSibling);d.className='pw pc';d.innerHTML=head+'<div class="cv rel"><canvas></canvas><div class="gxov"><b>'+esc(tx(ov))+'</b>'+(ml?'<span>'+esc(ml)+'</span>':'')+'</div></div>';pend.push([d.querySelector('canvas'),oc[0]]);return d}
     d.className='pw pc';d.innerHTML=head+'<div class="cv"><canvas></canvas></div>';pend.push([d.querySelector('canvas'),oc[0]]);return d;
   }
   /* 2) linhas (rótulo, valor, %, selos) */
   const rows=[];
-  [...el.querySelectorAll('.line')].filter(l=>!l.closest('.comp-row')).forEach(l=>{
+  [...el.querySelectorAll('.line,.custo-line')].filter(l=>!l.closest('.comp-row')).forEach(l=>{
     const kids=[...l.children];if(!kids.length)return;
     const sp=kids[0].cloneNode(true),rk=sp.querySelector('.uf-rank-num,b');let rank='';
     if(rk&&/^\d+\.?$/.test(tx(rk))){rank=tx(rk).replace('.','');rk.remove()}
@@ -15063,8 +15070,8 @@ function genw(w,pend){
     const flat=[];kids.slice(1).forEach(k=>{if(k.classList.contains('val-group'))flat.push.apply(flat,[...k.children]);else flat.push(k)});
     let val='',pct='';const chips=[];
     flat.forEach(k=>{const t=tx(k);if(!t)return;
-      if(k.classList.contains('pct'))pct=t;
-      else if(!val&&k.tagName==='B')val=t;
+      if(/(^|\s)pct(-pill)?(\s|$)/.test(k.className||''))pct=t;
+      else if(!val&&(k.tagName==='B'||k.classList.contains('val')))val=t;
       else chips.push({t:t,c:chipC(k,t)})});
     if(!val&&chips.length)val=chips.shift().t;
     if(!label&&!val)return;
@@ -15202,20 +15209,29 @@ function ok(sl){
 function filt(s){
   if(s==='terceirizada'){const tx=e=>e?(e.tagName==='SELECT'?(e.options[e.selectedIndex]||{}).text||'':(e.value||e.textContent)).trim():'';const m=tx($('tercMes')),a=tx($('tercAno')),fl=tx($('tercFilial'));return [fl,m,a].filter(Boolean).join(' / ')||'Mês atual'}
   const sc=$('screen-'+s);if(!sc)return '';
-  return [...sc.querySelectorAll('.filter-group')].map(g=>{
+  return [...new Set([...sc.querySelectorAll('.filter-group')].map(g=>{
     const sel=g.querySelector('select'),l=g.querySelector('label');if(!sel||!sel.value||!l)return '';
     const o=sel.options[sel.selectedIndex];return l.textContent.trim()+': '+(o?o.text.trim():sel.value);
-  }).filter(Boolean).join(' · ')||'Todos os dados';
+  }).filter(Boolean))].join(' · ')||'Todos os dados';
 }
 function killCharts(){live.forEach(c=>{try{c.destroy()}catch(_){}});live=[]}
 function build(sl){
-  const B=$('pB');B.innerHTML='';const pend=[];let n=0;
-  const ws=sl.auto?sl.w.filter(has):sl.w;
-  const P=sl.lay==='flow'?flowPos(ws,sl.per):sl.auto?autoPos(ws):ws.map(w=>o60(w.p));
-  ws.forEach((w,i)=>{
-    const p=P[i],d=w.k?kpi(w,p,sl.auto):w.c?chart(w,pend):w.l?list(w):w.g?gauge():w.u?ufcards(w):w.ch?chips(w):w.tb?table(w):w.x?genw(w,pend):w.fx?(window.__presFxW&&window.__presFxW[w.id]?window.__presFxW[w.id].make(w,sl):null):null;if(!d)return;
+  const B=$('pB');B.innerHTML='';let pend=[];
+  let ws=sl.auto?sl.w.filter(has):sl.w,P,out;
+  for(let pass=0;pass<3;pass++){
+    pend=[];
+    P=sl.lay==='flow'?flowPos(ws,sl.per):sl.auto?autoPos(ws):ws.map(w=>o60(w.p));
+    out=ws.map((w,i)=>{const p=P[i];
+      return w.k?kpi(w,p,sl.auto):w.c?chart(w,pend):w.l?list(w):w.g?gauge():w.u?ufcards(w):w.ch?chips(w):w.tb?table(w):w.x?genw(w,pend):w.fx?(window.__presFxW&&window.__presFxW[w.id]?window.__presFxW[w.id].make(w,sl):null):null});
+    /* itens sem conteúdo não ocupam espaço: refaz o layout só com o que existe */
+    if(!sl.auto||out.every(Boolean))break;
+    ws=ws.filter((w,i)=>out[i]);if(!ws.length)break;
+  }
+  let n=0;
+  ws.forEach((w,i)=>{const d=out[i],p=P[i];if(!d)return;
     d.style.gridColumn=p[0]+' / span '+p[2];d.style.gridRow=p[1]+' / span '+p[3];d.style.animationDelay=(n++*70)+'ms';B.appendChild(d);
   });
+  if(!B.children.length){B.innerHTML='<div class="pw empty-msg">Sem dados para exibir nesta tela</div>';return}
   fitAllPx(B);
   pend.forEach(x=>mk(x[0],x[1]));
 }
@@ -15645,6 +15661,7 @@ window.__presFxO=function(o,c){
     const lg=pl.legend||{};pl.legend=Object.assign({},lg,{labels:Object.assign({},lg.labels,{color:'#D5DEEC'})});
   }
   if(!/pie|doughnut|polarArea|radar/.test(c.type||'')){const lg2=pl.legend||{};if(lg2.display!==false){pl.legend=Object.assign({},lg2,{position:'top',labels:Object.assign({},lg2.labels,{padding:22})});o.layout=Object.assign({},o.layout,{padding:Object.assign({top:4},(o.layout&&typeof o.layout.padding==='object')?o.layout.padding:{})})}}
+  if(c.options&&c.options.indexAxis==='y'){const p0=(o.layout&&o.layout.padding&&typeof o.layout.padding==='object')?o.layout.padding:{};o.layout=Object.assign({},o.layout,{padding:Object.assign({},p0,{right:Math.max(150,p0.right||0)})})}
   o.plugins=pl;
 };
 /* linhas desenhadas da esquerda para a direita */
@@ -15913,7 +15930,7 @@ W.fx_pmap={has:()=>!!window.L&&pgeo().some(coord),make:function(){
   const ufs=us.map(o=>o.uf).filter((u,i,a)=>a.indexOf(u)===i).sort();
   d.innerHTML='<h3>Onde estamos — unidades parceiras e cidades atendidas</h3><div class="pmap"></div><div class="pleg">'+
     ufs.map(u=>'<i style="background:'+ufc(u)+'"></i>'+u).join('')+
-    '<span class="pls"><b>'+pgeo().length+'</b> unidades · <b>'+ncAll()+'</b> cidades atendidas · bolha = unidade (tamanho = cidades atendidas) · ponto = cidade atendida</span></div>';
+    '<span class="pls"><b>'+pgeo().length+'</b> unidades · <b>'+ncAll()+'</b> cidades atendidas · círculo com borda branca = unidade · ponto = cidade atendida</span></div>';
   const mt=d.querySelector('.pmap');
   later(mt,()=>{
     const m=L.map(mt,{preferCanvas:true,zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false});
@@ -15921,11 +15938,11 @@ W.fx_pmap={has:()=>!!window.L&&pgeo().some(coord),make:function(){
     L.control.attribution({prefix:false}).addAttribution('© OpenStreetMap').addTo(m);
     const pts=[],done={};
     us.forEach(o=>Object.keys(o.ci).forEach(ci=>{const k=o.uf+'|'+ci;if(done[k])return;done[k]=1;let c=null;try{c=_getCityCoord(o.uf,ci)}catch(_){}
-      if(c&&c.lat!=null){L.circleMarker([c.lat,c.lng],{radius:4.5,stroke:false,fillColor:ufc(o.uf),fillOpacity:.6,interactive:false}).addTo(m);pts.push([c.lat,c.lng])}}));
+      if(c&&c.lat!=null){L.circleMarker([c.lat,c.lng],{radius:3.2,stroke:false,fillColor:ufc(o.uf),fillOpacity:.65,interactive:false}).addTo(m);pts.push([c.lat,c.lng])}}));
     us.slice().sort((a,b)=>Object.keys(b.ci).length-Object.keys(a.ci).length).forEach((o,i)=>{
-      const c=coord(o),n=Object.keys(o.ci).length,S=Math.round(40+Math.min(1,n/40)*28);
+      const c=coord(o),n=Object.keys(o.ci).length,S=Math.round(13+Math.min(1,n/40)*8);
       L.marker([c.lat,c.lng],{interactive:false,zIndexOffset:1000,icon:L.divIcon({className:'pfx-di',iconSize:[S,S],iconAnchor:[S/2,S/2],
-        html:'<div class="pb" style="--bc:'+ufc(o.uf)+';width:'+S+'px;height:'+S+'px;animation-delay:'+(250+i*60)+'ms"><b>'+esc(o.n.slice(0,3))+'</b></div><span class="pcn">'+esc(o.cid)+'</span>'})}).addTo(m);pts.push([c.lat,c.lng])});
+        html:'<div class="pb pbs" style="--bc:'+ufc(o.uf)+';width:'+S+'px;height:'+S+'px;animation-delay:'+(250+i*60)+'ms"></div>'})}).addTo(m);pts.push([c.lat,c.lng])});
     m.invalidateSize();if(pts.length>1)m.fitBounds(pts,{padding:[50,50],maxZoom:9});else if(pts.length)m.setView(pts[0],9)});
   return d}};
 /* ===================== biblioteca visual no modelo do vídeo ===================== */
@@ -16178,7 +16195,7 @@ css.textContent=`
 #presOv .rt2 th{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-soft);text-align:left;font-weight:600;padding:4px 6px}
 #presOv .rt2 td{font-size:16px;padding:7px 6px;border-bottom:1px solid var(--border);color:var(--text)}
 #presOv .rt2 .num{text-align:right}
-#presOv .pl{padding:3px 12px;border-radius:999px;font-size:13px;font-weight:700}
+#presOv span.pl{padding:3px 12px;border-radius:999px;font-size:13px;font-weight:700}
 #presOv .pl.rd{background:rgba(248,113,113,.18);color:#F87171}#presOv .pl.am{background:rgba(251,191,36,.18);color:#FBBF24}#presOv .pl.gr{background:rgba(52,211,153,.18);color:#34D399}
 #presOv .pw.ss{background:none!important;border:0!important;box-shadow:none!important;overflow:visible;padding:0;gap:10px}
 #presOv .sc{flex:1;border:1px solid var(--border);border-radius:14px;background:var(--card);padding:10px 20px;display:flex;flex-direction:column;justify-content:center}
@@ -16200,6 +16217,8 @@ css.textContent=`
 #presOv .dtg b{display:block;font-size:56px;font-weight:800;line-height:1.05;color:var(--text)}#presOv .dtg span{font-size:17px;color:var(--text-soft)}
 #presOv .pls{margin-left:18px}#presOv .pls b{color:var(--text)}
 #presOv .pfx-di{overflow:visible}
+#presOv .pb.pbs{border:2px solid #fff;background:var(--bc);box-shadow:0 0 0 1.5px rgba(0,0,0,.45),0 0 8px var(--bc)}
+#presOv.panim .pb.pbs::after{border-width:1.5px;animation-duration:2.8s}
 #presOv .pcn{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:3px;font-size:13px;font-weight:700;color:#EAF1FB;text-shadow:0 1px 4px #000,0 0 2px #000;white-space:nowrap}
 /* ---- parceiros: tabela ---- */
 #presOv .pt2{justify-content:flex-start}
@@ -16210,6 +16229,16 @@ css.textContent=`
 #presOv .pt3 tbody tr:last-child td{border-bottom:0}
 #presOv .ptg{display:inline-block;min-width:46px;text-align:center;padding:3px 12px;border-radius:999px;font-size:16px;font-weight:800}
 #presOv .pl.nu{background:rgba(148,163,184,.16);color:#94A3B8}
+#presOv .pw.pl{border-radius:14px;padding:20px 26px}
+#presOv .pw.pl .ln{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15;font-size:20px}
+#presOv .pw.pl .lr{max-height:96px}
+#presOv .pw.pl .lv{flex:none;white-space:nowrap}
+#presOv .pw.pl .lpc{flex:none;min-width:58px;text-align:right;font-size:16px;color:var(--text-soft);font-weight:600}
+#presOv .gxov{position:absolute;left:0;right:0;bottom:6%;text-align:center;pointer-events:none}
+#presOv .gxov b{display:block;font-size:56px;font-weight:800;line-height:1;color:var(--text)}
+#presOv .gxov span{font-size:17px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-soft)}
+#presOv .pw.pc .cv.rel{position:relative}
+#presOv .pw.empty-msg{display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-soft);grid-column:1 / -1;grid-row:1 / -1}
 #presOv .pt3 .pl{display:inline-block;font-size:16px;padding:4px 16px;min-width:92px;text-align:center}
 #presOv.panim .pt3 tbody tr{animation:pfxrow .5s both}
 /* ---- itens livres (clones dos cards da dash) no mesmo padrão dos demais slides ---- */
