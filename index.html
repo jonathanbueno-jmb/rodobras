@@ -4459,11 +4459,19 @@ window.rodoLogoCliente = function(nome){
      Padrão: segunda a sexta = 50, sábado = 54. Só os dias alterados ficam guardados. */
   const LIM_KEY = 'rodobras_terceirizada_lim_v1';
   const DEF_UTEIS = 7027, DEF_SAB = 7598;           // limites em R$ (valor, não quantidade)
-  const RATES = [141, 138, 148];                    // R$ por pessoa: AB, AE, CF
+  const RATES_DEF = [141, 138, 148];                // R$ por pessoa: AB, AE, CF (CWB, JOI, GRU)
+  let RATES = RATES_DEF;                            // troca conforme a filial (ver useFil)
+  /* POA: valores e limites por dia vindos da planilha de orçamento (diária R$ 190 para AB e AE).
+     Quantidades previstas por dia [AB, AE, CF]; o limite do dia = soma qtd × diária. Dias fora do plano usam POA_BASE. */
+  const POA_RATES = [190, 190, 148];
+  const POA_BASE = [18, 15, 0];
+  const POA_PLAN = {"2026-11-02":[18,15,0],"2026-11-03":[18,15,0],"2026-11-04":[18,15,0],"2026-11-05":[18,15,0],"2026-11-06":[18,15,0],"2026-11-07":[18,15,0],"2026-11-09":[18,15,0],"2026-11-10":[18,15,0],"2026-11-11":[18,15,0],"2026-11-12":[18,15,0],"2026-11-13":[18,15,0],"2026-11-14":[18,15,0],"2026-11-16":[18,15,0],"2026-11-17":[18,15,0],"2026-11-18":[18,15,0],"2026-11-19":[18,15,0],"2026-11-20":[18,15,0],"2026-11-21":[18,15,0],"2026-11-23":[25,15,0],"2026-11-24":[25,15,0],"2026-11-25":[30,15,0],"2026-11-26":[30,15,0],"2026-11-27":[30,15,0],"2026-11-28":[30,15,0],"2026-11-30":[30,15,0]};
   const LIM_MIN = 1000;                             // limites antigos (em quantidade, < 1000) são ignorados
   let lims = {};
   try{ lims = JSON.parse(localStorage.getItem(LIM_KEY) || '{}') || {}; }catch(_){ lims = {}; }
-  function defLimit(w){ return w === 6 ? DEF_SAB : DEF_UTEIS; }
+  function poaQtd(date){ return POA_PLAN[date] || POA_BASE; }
+  function defLimit(w, date){ return filial === 'POA' ? sumQtd(poaQtd(date)) : (w === 6 ? DEF_SAB : DEF_UTEIS); }
+  function defQtd(w, date){ return filial === 'POA' ? poaQtd(date) : (w === 6 ? DEF_QTD_SAB : DEF_QTD_UTEIS); }
   const DEF_QTD_UTEIS = [19, 24, 7], DEF_QTD_SAB = [22, 24, 8];   // quantidades padrão AB, AE, CF
   const LQ_KEY = 'rodobras_terceirizada_lqty_v1';
   let lqty = {};
@@ -4475,7 +4483,7 @@ window.rodoLogoCliente = function(nome){
   const rdLS = k => { try{ return JSON.parse(localStorage.getItem(k) || '{}') || {}; }catch(_){ return {}; } };
   let ST = {};
   FILS.forEach(f => { ST[f] = { db: rdLS(KEY + sfx(f)), lims: rdLS(LIM_KEY + sfx(f)), lqty: rdLS(LQ_KEY + sfx(f)) }; });
-  function useFil(){ const s = ST[filial]; db = s.db; lims = s.lims; lqty = s.lqty; }
+  function useFil(){ const s = ST[filial]; db = s.db; lims = s.lims; lqty = s.lqty; RATES = filial === 'POA' ? POA_RATES : RATES_DEF; }
   useFil();
   /* chave de sincronização: CWB = só a data (como sempre foi); JOI/POA = 'AAAA-MM-DD|FIL' */
   const keyOf = (f, d) => f === 'CWB' ? d : d + '|' + f;
@@ -4486,12 +4494,12 @@ window.rodoLogoCliente = function(nome){
   /* quantidades exibidas no modal: padrão do dia; se o limite foi personalizado, só as que batem com o valor guardado */
   function qtdFor(w, date){
     const c = customLim(date);
-    if(!c) return w === 6 ? DEF_QTD_SAB : DEF_QTD_UTEIS;
+    if(!c) return defQtd(w, date);
     const q = lqty[date];
     return (q && q.length === 3 && Math.round(sumQtd(q) * 100) === Math.round(c * 100)) ? q : null;
   }
   function customLim(date){ const v = Number(lims[date]); return v >= LIM_MIN ? v : 0; }
-  function limitFor(w, date){ if(w === 0) return null; const v = customLim(date); return v > 0 ? v : defLimit(w); }
+  function limitFor(w, date){ if(w === 0) return null; const v = customLim(date); return v > 0 ? v : defLimit(w, date); }
   const fmtNum = n => Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const fmtBRL = n => 'R$ ' + fmtNum(n);
   function parseMoney(x){
@@ -4873,6 +4881,7 @@ window.rodoLogoCliente = function(nome){
     limDate = tr.dataset.date;
     const w = Number(tr.dataset.w), d = Number(limDate.slice(8)), mo = Number(limDate.slice(5,7));
     $('tercModalT').textContent = 'Limite do dia ' + pad(d) + '/' + pad(mo) + ' (' + WD[w] + ')';
+    $('tercModalSub').textContent = 'Valor do dia = AB × ' + fmtBRL(RATES[0]) + ' + AE × ' + fmtBRL(RATES[1]) + ' + CF × ' + fmtBRL(RATES[2]) + ', somando todos os períodos. Informe as quantidades para calcular o limite em R$ ou digite o valor direto. Acima do limite, a justificativa é obrigatória.';
     $('tercLimDia').value = fmtNum(limitFor(w, limDate));
     { const q = qtdFor(w, limDate); ['AB','AE','CF'].forEach((c, i) => { $('tercQtd' + c).value = q ? q[i] : ''; }); }
     $('tercLimReset').hidden = !(customLim(limDate) > 0);
@@ -4890,7 +4899,7 @@ window.rodoLogoCliente = function(nome){
     if(!(v >= LIM_MIN)){ alert('Informe o limite em R$ (mínimo R$ 1.000,00).'); return; }
     const w = Number(document.querySelector('#tercBody tr[data-date="'+limDate+'"]').dataset.w);
     const qs = ['AB','AE','CF'].map(c => $('tercQtd' + c).value);
-    if(v === defLimit(w)){ delete lims[limDate]; delete lqty[limDate]; }
+    if(v === defLimit(w, limDate)){ delete lims[limDate]; delete lqty[limDate]; }
     else {
       lims[limDate] = v;
       if(qs.every(x => x !== '') && Math.round(sumQtd(qs) * 100) === Math.round(v * 100)) lqty[limDate] = qs.map(Number); else delete lqty[limDate];
@@ -5039,7 +5048,7 @@ window.rodoLogoCliente = function(nome){
     const wt = wb.addWorksheet('Valores e limites');
     wt.columns = [{ width:30 }, { width:22 }];
     [['Cargo','Valor por pessoa (R$)'], ['AB - Ajudante de Barracão', RATES[0]], ['AE - Ajudante de Entregas', RATES[1]], ['CF - Conferente', RATES[2]], [],
-     ['Limite padrão','Valor (R$)'], ['Dias úteis (seg a sex)', DEF_UTEIS], ['Sábados', DEF_SAB]].forEach(a => wt.addRow(a));
+     ['Limite padrão','Valor (R$)'], ['Dias úteis (seg a sex)', defLimit(1)], ['Sábados', defLimit(6)]].forEach(a => wt.addRow(a));
     [1, 6].forEach(n => wt.getRow(n).eachCell(c => {
       c.font = { name:'Arial', size:10, bold:true, color:{ argb:'FFFFFFFF' } };
       c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:NAVY } };
