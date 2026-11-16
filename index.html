@@ -16523,7 +16523,7 @@ document.head.appendChild(css);
     h += '<div class="pbk-sec"><h3><span>Emissões por cliente</span><em>'+nf(clis.length)+' cliente'+(clis.length===1?'':'s')+'</em></h3><div class="pbk-scroll">'+
          clis.map(function(x,i){ return rowHtml((i+1)+'. '+x[0], '', x[1], c.emi, mc); }).join('')+'</div></div>';
 
-    h += '<p class="pbk-note">Emissões: coluna Data de Emissão (novembro/'+c.year+'). Entregas: Mês = nov + Dia Entrega.<br>Este painel não é afetado pelos filtros do dashboard.</p>';
+    h += '<p class="pbk-note">(novembro/'+c.year+')<br>Este painel não é afetado pelos filtros do dashboard.</p>';
     body.innerHTML = h;
   }
 
