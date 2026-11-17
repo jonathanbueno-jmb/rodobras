@@ -4471,12 +4471,18 @@ window.rodoLogoCliente = function(nome){
   const POA_RATES = [190, 190, 148];
   const POA_BASE = [18, 15, 0];
   const POA_PLAN = {"2026-11-02":[18,15,0],"2026-11-03":[18,15,0],"2026-11-04":[18,15,0],"2026-11-05":[18,15,0],"2026-11-06":[18,15,0],"2026-11-07":[18,15,0],"2026-11-09":[18,15,0],"2026-11-10":[18,15,0],"2026-11-11":[18,15,0],"2026-11-12":[18,15,0],"2026-11-13":[18,15,0],"2026-11-14":[18,15,0],"2026-11-16":[18,15,0],"2026-11-17":[18,15,0],"2026-11-18":[18,15,0],"2026-11-19":[18,15,0],"2026-11-20":[18,15,0],"2026-11-21":[18,15,0],"2026-11-23":[25,15,0],"2026-11-24":[25,15,0],"2026-11-25":[30,15,0],"2026-11-26":[30,15,0],"2026-11-27":[30,15,0],"2026-11-28":[30,15,0],"2026-11-30":[30,15,0]};
+  /* JOI e GRU: quantidades previstas e diária por dia/cargo vindas das planilhas de orçamento 2026/2027.
+     FPLAN[filial][data] = [[qtd, diária] AB, [qtd, diária] AE, [qtd, diária] CF]; limite do dia = soma qtd × diária.
+     Dias fora do plano usam os valores/limites padrão (aba "Valores e limites"). */
+  const FPLAN = {"JOI":{"2026-11-02":[[2,210],[0,190],[0,220]],"2026-11-03":[[2,220],[10,190],[1,220]],"2026-11-04":[[2,220],[7,190],[1,220]],"2026-11-05":[[3,220],[10,190],[1,220]],"2026-11-06":[[0,220],[8,190],[1,220]],"2026-11-07":[[1,220],[2,190],[0,220]],"2026-11-09":[[3,220],[11,190],[1,220]],"2026-11-10":[[3,220],[10,190],[1,220]],"2026-11-11":[[6,220],[10,190],[1,220]],"2026-11-12":[[7,220],[12,190],[1,220]],"2026-11-13":[[7,220],[12,190],[2,220]],"2026-11-14":[[3,220],[12,190],[1,220]],"2026-11-16":[[10,220],[12,190],[1,220]],"2026-11-17":[[10,220],[12,190],[1,220]],"2026-11-18":[[10,220],[12,190],[1,220]],"2026-11-19":[[10,220],[12,190],[1,220]],"2026-11-20":[[9,220],[12,190],[1,220]],"2026-11-21":[[10,220],[12,190],[1,220]],"2026-11-23":[[10,220],[12,190],[1,220]],"2026-11-24":[[10,220],[11,190],[1,220]],"2026-11-25":[[9,220],[10,190],[1,220]],"2026-11-26":[[11,220],[12,190],[1,220]],"2026-11-27":[[9,220],[12,190],[1,220]],"2026-11-28":[[10,220],[12,190],[1,220]],"2026-11-30":[[10,220],[12,190],[1,220]]},"GRU":{"2026-11-02":[[0,190],[0,190],[0,215]],"2026-11-03":[[13,190],[2,190],[6,215]],"2026-11-04":[[14,190],[2,190],[6,215]],"2026-11-05":[[13,190],[2,190],[6,215]],"2026-11-06":[[13,190],[2,190],[6,215]],"2026-11-07":[[2,190],[1,190],[3,215]],"2026-11-09":[[14,190],[2,190],[6,215]],"2026-11-10":[[14,190],[2,190],[6,215]],"2026-11-11":[[15,190],[2,190],[6,215]],"2026-11-12":[[15,190],[2,190],[6,215]],"2026-11-13":[[14,190],[2,190],[6,215]],"2026-11-14":[[10,190],[1,190],[4,215]],"2026-11-16":[[25,190],[2,190],[6,215]],"2026-11-17":[[25,190],[2,190],[6,215]],"2026-11-18":[[26,190],[2,190],[6,215]],"2026-11-19":[[26,190],[2,190],[6,215]],"2026-11-20":[[27,190],[2,190],[6,215]],"2026-11-21":[[5,190],[2,190],[6,215]],"2026-11-23":[[28,190],[2,190],[8,215]],"2026-11-24":[[28,190],[2,190],[8,215]],"2026-11-25":[[28,190],[2,190],[8,215]],"2026-11-26":[[30,190],[2,190],[8,215]],"2026-11-27":[[34,190],[2,190],[8,215]],"2026-11-28":[[30,190],[2,190],[8,215]],"2026-11-30":[[30,190],[2,190],[8,215]]}};
+  function planQty(date){ const p = FPLAN[filial] && FPLAN[filial][date]; return p ? p.map(x => x[0]) : null; }
+  function ratesFor(date){ const p = FPLAN[filial] && FPLAN[filial][date]; return p ? p.map(x => x[1]) : RATES; }
   const LIM_MIN = 1000;                             // limites antigos (em quantidade, < 1000) são ignorados
   let lims = {};
   try{ lims = JSON.parse(localStorage.getItem(LIM_KEY) || '{}') || {}; }catch(_){ lims = {}; }
   function poaQtd(date){ return POA_PLAN[date] || POA_BASE; }
-  function defLimit(w, date){ return filial === 'POA' ? sumQtd(poaQtd(date)) : (w === 6 ? DEF_SAB : DEF_UTEIS); }
-  function defQtd(w, date){ return filial === 'POA' ? poaQtd(date) : (w === 6 ? DEF_QTD_SAB : DEF_QTD_UTEIS); }
+  function defLimit(w, date){ const pq = planQty(date); if(pq) return sumQtd(pq, date); return filial === 'POA' ? sumQtd(poaQtd(date)) : (w === 6 ? DEF_SAB : DEF_UTEIS); }
+  function defQtd(w, date){ const pq = planQty(date); if(pq) return pq; return filial === 'POA' ? poaQtd(date) : (w === 6 ? DEF_QTD_SAB : DEF_QTD_UTEIS); }
   const DEF_QTD_UTEIS = [19, 24, 7], DEF_QTD_SAB = [22, 24, 8];   // quantidades padrão AB, AE, CF
   const LQ_KEY = 'rodobras_terceirizada_lqty_v1';
   let lqty = {};
@@ -4495,13 +4501,13 @@ window.rodoLogoCliente = function(nome){
   const mk = d => keyOf(filial, d);
   const splitKey = k => { const i = String(k).indexOf('|'); return i < 0 ? {fil:'CWB', date:String(k)} : {fil:k.slice(i+1), date:k.slice(0,i)}; };
   function saveLq(){ FILS.forEach(f => { try{ localStorage.setItem(LQ_KEY + sfx(f), JSON.stringify(ST[f].lqty)); }catch(_){} }); }
-  function sumQtd(q){ return Math.round(q.reduce((t, n, i) => t + (Number(n) || 0) * RATES[i], 0) * 100) / 100; }
+  function sumQtd(q, date){ const rt = date ? ratesFor(date) : RATES; return Math.round(q.reduce((t, n, i) => t + (Number(n) || 0) * rt[i], 0) * 100) / 100; }
   /* quantidades exibidas no modal: padrão do dia; se o limite foi personalizado, só as que batem com o valor guardado */
   function qtdFor(w, date){
     const c = customLim(date);
     if(!c) return defQtd(w, date);
     const q = lqty[date];
-    return (q && q.length === 3 && Math.round(sumQtd(q) * 100) === Math.round(c * 100)) ? q : null;
+    return (q && q.length === 3 && Math.round(sumQtd(q, date) * 100) === Math.round(c * 100)) ? q : null;
   }
   function customLim(date){ const v = Number(lims[date]); return v >= LIM_MIN ? v : 0; }
   function limitFor(w, date){ if(w === 0) return null; const v = customLim(date); return v > 0 ? v : defLimit(w, date); }
@@ -4680,7 +4686,7 @@ window.rodoLogoCliente = function(nome){
 
   function cellVal(r, p, i){ const v = r && r[p] ? r[p][i] : ''; return (v === '' || v == null) ? '' : Number(v); }
   function totalOf(r){ let t = 0; if(!r) return 0; PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') t += v; } }); return t; }
-  function valueOf(r){ let t = 0; if(!r) return 0; PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') t += v * RATES[i]; } }); return Math.round(t * 100) / 100; }
+  function valueOf(r, date){ const RT = ratesFor(date); let t = 0; if(!r) return 0; PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') t += v * RT[i]; } }); return Math.round(t * 100) / 100; }
   function isOver(val, lim){ return Math.round((val - lim) * 100) > 0; }
   /* dias acima do limite e SEM justificativa: enquanto existirem, só eles aceitam novas marcações */
   function pendingDates(){
@@ -4689,7 +4695,7 @@ window.rodoLogoCliente = function(nome){
       const r = db[date]; if(!isFilled(r)) return;
       const w = new Date(Number(date.slice(0,4)), Number(date.slice(5,7)) - 1, Number(date.slice(8))).getDay();
       const lim = limitFor(w, date); if(lim === null) return;
-      if(isOver(valueOf(r), lim) && !r.j) out.add(date);
+      if(isOver(valueOf(r, date), lim) && !r.j) out.add(date);
     });
     return out;
   }
@@ -4766,7 +4772,7 @@ window.rodoLogoCliente = function(nome){
   function recalcRow(tr){
     const date = tr.dataset.date, w = Number(tr.dataset.w), lim = limitFor(w, date);
     const r = db[date];
-    const tot = totalOf(r), val = valueOf(r), filled = isFilled(r);
+    const tot = totalOf(r), val = valueOf(r, date), filled = isFilled(r);
     const qtyEl = tr.querySelector('.t-qty'), stEl = tr.querySelector('.t-st'), sel = tr.querySelector('.terc-just'), apr = tr.querySelector('.terc-apr');
     let pill = '<span class="terc-pill na">—</span>', over = false;
     if(lim === null){ qtyEl.textContent = '—'; pill = '<span class="terc-pill na">Sem operação</span>'; }
@@ -4800,7 +4806,7 @@ window.rodoLogoCliente = function(nome){
       uteis++;
       const r = db[date]; if(!isFilled(r)) continue;
       preench++;
-      const t = totalOf(r), v = valueOf(r); total += t; valor += v;
+      const t = totalOf(r), v = valueOf(r, date); total += t; valor += v;
       if(isOver(v, lim)){ exc++; if(!r.j) pend++; }
     }
     $('tercKpiDias').textContent = preench + ' / ' + uteis;
@@ -4816,7 +4822,7 @@ window.rodoLogoCliente = function(nome){
       if(lim === null || !isFilled(r)) return;
       let k = 0;
       PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') col[k] += v; k++; } });
-      const t = totalOf(r), v = valueOf(r); tot += t; valTot += v; if(isOver(v, lim)) excTot += (v - lim);
+      const t = totalOf(r), v = valueOf(r, date); tot += t; valTot += v; if(isOver(v, lim)) excTot += (v - lim);
     });
     col.forEach((v,k)=>{ const el = document.querySelector('#tercFoot [data-f="'+k+'"]'); if(el) el.textContent = v; });
     const tt = document.querySelector('#tercFoot [data-f="tot"]'); if(tt) tt.textContent = tot;
@@ -4886,7 +4892,7 @@ window.rodoLogoCliente = function(nome){
     limDate = tr.dataset.date;
     const w = Number(tr.dataset.w), d = Number(limDate.slice(8)), mo = Number(limDate.slice(5,7));
     $('tercModalT').textContent = 'Limite do dia ' + pad(d) + '/' + pad(mo) + ' (' + WD[w] + ')';
-    $('tercModalSub').textContent = 'Valor do dia = AB × ' + fmtBRL(RATES[0]) + ' + AE × ' + fmtBRL(RATES[1]) + ' + CF × ' + fmtBRL(RATES[2]) + ', somando todos os períodos. Informe as quantidades para calcular o limite em R$ ou digite o valor direto. Acima do limite, a justificativa é obrigatória.';
+    $('tercModalSub').textContent = 'Valor do dia = AB × ' + fmtBRL(ratesFor(limDate)[0]) + ' + AE × ' + fmtBRL(ratesFor(limDate)[1]) + ' + CF × ' + fmtBRL(ratesFor(limDate)[2]) + ', somando todos os períodos. Informe as quantidades para calcular o limite em R$ ou digite o valor direto. Acima do limite, a justificativa é obrigatória.';
     $('tercLimDia').value = fmtNum(limitFor(w, limDate));
     { const q = qtdFor(w, limDate); ['AB','AE','CF'].forEach((c, i) => { $('tercQtd' + c).value = q ? q[i] : ''; }); }
     $('tercLimReset').hidden = !(customLim(limDate) > 0);
@@ -4907,7 +4913,7 @@ window.rodoLogoCliente = function(nome){
     if(v === defLimit(w, limDate)){ delete lims[limDate]; delete lqty[limDate]; }
     else {
       lims[limDate] = v;
-      if(qs.every(x => x !== '') && Math.round(sumQtd(qs) * 100) === Math.round(v * 100)) lqty[limDate] = qs.map(Number); else delete lqty[limDate];
+      if(qs.every(x => x !== '') && Math.round(sumQtd(qs, limDate) * 100) === Math.round(v * 100)) lqty[limDate] = qs.map(Number); else delete lqty[limDate];
     }
     saveLq();   // igual ao padrão: não precisa guardar
     applyLim();
@@ -4918,7 +4924,7 @@ window.rodoLogoCliente = function(nome){
   document.querySelectorAll('.terc-qtd').forEach(inp => inp.addEventListener('input', () => {
     inp.value = inp.value.replace(/\D/g,'').slice(0,3);
     const qs = ['AB','AE','CF'].map(c => $('tercQtd' + c).value);
-    $('tercLimDia').value = fmtNum(sumQtd(qs));
+    $('tercLimDia').value = fmtNum(sumQtd(qs, limDate));
   }));
   $('tercLimDia').addEventListener('input', () => { document.querySelectorAll('.terc-qtd').forEach(i => { i.value = ''; }); });
   $('tercLimCancel').addEventListener('click', closeLim);
@@ -4985,12 +4991,12 @@ window.rodoLogoCliente = function(nome){
       if(w === 0) continue;                                   // domingo: sem operação
       const date = ano + '-' + pad(mes) + '-' + pad(d), r = db[date];
       const lim = limitFor(w, date), filled = isFilled(r), q = qtdFor(w, date);
-      const dayOver = filled && lim !== null && isOver(valueOf(r), lim);
+      const dayOver = filled && lim !== null && isOver(valueOf(r, date), lim);
       for(let i = 0; i < 3; i++){
         const n = ws.rowCount + 1;
         let real = null;
         if(filled){ real = 0; PER.forEach(p => { const v = cellVal(r, p, i); if(v !== '') real += v; }); }
-        const prev = q ? q[i] : null, rate = RATES[i];
+        const prev = q ? q[i] : null, rate = ratesFor(date)[i];
         const dq = (prev !== null && real !== null) ? real - prev : null;
         let status;
         if(!filled) status = 'Sem lançamento';
@@ -5208,6 +5214,7 @@ window.rodoLogoCliente = function(nome){
           <label class="chk" data-screen="qualidade"><input type="checkbox" value="qualidade"> Qualidade</label>
           <label class="chk" data-screen="planejamento"><input type="checkbox" value="planejamento"> Planejamento</label>
           <label class="chk" data-screen="terceirizada"><input type="checkbox" value="terceirizada"> Terceirizada</label>
+          <label class="chk" data-screen="apoio"><input type="checkbox" value="apoio"> Apoio</label>
           <label class="chk" data-screen="configuracao"><input type="checkbox" value="configuracao"> Usuários</label>
           <label class="chk" data-screen="apresentacao" title="Libera o botão Apresentação no topo da página"><input type="checkbox" value="apresentacao"> ▶ Botão Apresentação</label>
         </div>
@@ -12573,7 +12580,7 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
   const STORAGE_USERS = 'rodobras_users_v24';
   const STORAGE_SESSION = 'rodobras_session_v24';
   // v28.1 HOTFIX: incluído 'planejamento' em ALL_SCREENS e em SCREEN_LABEL
-  const ALL_SCREENS = ['entregas','parceiros','prazos','coletas','avaliacao','reclame','custos','qualidade','planejamento','terceirizada','configuracao','apresentacao'];
+  const ALL_SCREENS = ['entregas','parceiros','prazos','coletas','avaliacao','reclame','custos','qualidade','planejamento','terceirizada','apoio','configuracao','apresentacao'];
   const SCREEN_LABEL = {
     entregas:'Entregas', parceiros:'Parceiros', coletas:'Coletas',
     avaliacao:'Avaliação', reclame:'Reclame Aqui', custos:'Custos', prazos:'Prazos', qualidade:'Qualidade', planejamento:'Planejamento', terceirizada:'Terceirizada', apoio:'Apoio', configuracao:'Usuários', apresentacao:'Apresentação'
@@ -12762,9 +12769,17 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
   let usersCache = [];
   try{ localStorage.removeItem(STORAGE_USERS); }catch(_){}   // apaga cópia antiga de usuários/senhas deste navegador
   async function usersApi(action, payload){
-    const resp = await fetch(USERS_API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-                                          body: JSON.stringify(Object.assign({ action: action }, payload || {})) });
-    return await resp.json();
+    const body = JSON.stringify(Object.assign({ action: action }, payload || {}));
+    let resp, lastErr;
+    for(let t = 0; t < 2 && !resp; t++){            // 1 nova tentativa em caso de falha de rede/Apps Script
+      try{
+        resp = await fetch(USERS_API, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body });
+      }catch(e){ lastErr = e; if(t === 0) await new Promise(r => setTimeout(r, 800)); }
+    }
+    if(!resp) throw new Error('sem resposta do Apps Script (verifique a implantação do Web App: acesso "Qualquer pessoa" e nova versão publicada) — ' + (lastErr && lastErr.message || lastErr));
+    const txt = await resp.text();
+    try{ return JSON.parse(txt); }
+    catch(_){ throw new Error('o Apps Script devolveu uma resposta que não é JSON (provável erro no script; veja Execuções no Apps Script)'); }
   }
   function authBody(){ const s = loadSession(); return { login: s && s.login, senha: s && s.senha }; }
   function loadSession(){
@@ -12830,7 +12845,7 @@ const QUAL_DEFAULT = {"rnc":[{"id":1,"acao":"Enviado Pacote de RNC's mes de junh
     // Esconde itens do drawer não permitidos
     document.querySelectorAll('.drawer .nav-item').forEach(item => {
       const s = item.getAttribute('data-screen');
-      if(allowed.has(s) || s === 'apoio'){ /* Apoio (vídeos) é liberado para todos os perfis */
+      if(allowed.has(s) || (s === 'apoio' && ['master','admin'].indexOf(String(user.role||'').toLowerCase()) >= 0)){ /* Apoio (vídeos): só com a permissão 'apoio' (master/admin sempre veem) */
         item.style.display = '';
       } else {
         item.style.display = 'none';
