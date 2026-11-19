@@ -15070,7 +15070,7 @@ const VERSAO_DADOS = '2026-09-09';
 // Last-Modified do servidor NÃO serve para isso: em hospedagem
 // estática ele traz a data do deploy do site, não a do arquivo.
 // Formatos aceitos: 'AAAA-MM-DD HH:MM', 'AAAA-MM-DDTHH:MM' ou 'AAAA-MM-DD'.
-const DATA_ARQUIVO_DADOS = '2026-11-19 11:18';
+const DATA_ARQUIVO_DADOS = '2026-11-18 17:30';
 
 async function autoCarregarDados() {
   const fileInput = document.getElementById('fileInput');
@@ -16785,8 +16785,16 @@ document.head.appendChild(css);
 #pbkPanel .pbk-bw.sv.pk .pbk-cb{box-shadow:0 0 10px rgba(217,222,231,.55)}
 #pbkPanel .pbk-bw .pbk-cv{font-size:9px}
 #pbkPanel .pbk-dcol.we .pbk-cw,#pbkPanel .pbk-dcol.we .pbk-cd{color:#d98a8a}
+#pbkPanel{--pbk-prev:#4cc9f0}
+#pbkPanel .pbk-sec h3 em.pm{color:var(--pbk-prev);border-color:rgba(76,201,240,.45);background:rgba(76,201,240,.1)}
+#pbkPanel .pbk-leg i.pm{width:16px;height:0;border-top:2px dashed var(--pbk-prev);border-radius:0;background:none}
+#pbkPanel .pbk-pair{position:relative}
+#pbkPanel .pbk-pl{position:absolute;bottom:0;left:22px;overflow:visible;pointer-events:none}
+#pbkPanel .pbk-track.cmp{position:relative;overflow:visible}
+#pbkPanel .pbk-tick{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--pbk-prev);border-radius:1px;box-shadow:0 0 6px rgba(76,201,240,.7)}
+#pbkPanel .pbk-val i.pm{color:var(--pbk-prev);font-weight:700}
 #pbkPanel .pbk-tw{max-height:320px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--pbk-line,rgba(230,185,79,.2));border-radius:10px}
-#pbkPanel table.pbk-tb{width:100%;min-width:600px;border-collapse:separate;border-spacing:0;font-size:12.5px}
+#pbkPanel table.pbk-tb{width:100%;min-width:700px;border-collapse:separate;border-spacing:0;font-size:12.5px}
 #pbkPanel .pbk-tb th{position:sticky;top:0;z-index:2;padding:8px 10px;background:#17140b;color:var(--pbk-gold);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;text-align:right;line-height:1.25;border-bottom:1px solid rgba(230,185,79,.45)}
 #pbkPanel .pbk-tb td{padding:7px 10px;text-align:right;color:#fff;font-weight:600;font-variant-numeric:tabular-nums;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
 #pbkPanel .pbk-tb th:first-child,#pbkPanel .pbk-tb td:first-child{text-align:left;position:sticky;left:0}
@@ -16798,6 +16806,9 @@ document.head.appendChild(css);
 #pbkPanel .pbk-tb td.sr.z{color:var(--pbk-soft)}
 #pbkPanel .pbk-tb td.sr:not(.z){color:#f0a98a}
 #pbkPanel .pbk-tb td.tt{font-weight:800}
+#pbkPanel .pbk-tb td.pv{color:var(--pbk-prev)}
+#pbkPanel .pbk-tb td.pv small{display:block;font-size:10px;font-weight:700;opacity:.85}
+#pbkPanel .pbk-tb th.pv{color:var(--pbk-prev)}
 #pbkPanel .pbk-tb tfoot td{position:sticky;bottom:0;z-index:2;background:#17140b;color:var(--pbk-gold-l);font-weight:800;border-top:1px solid rgba(230,185,79,.45);border-bottom:0}
 #pbkPanel .pbk-tb tfoot td:first-child{background:#17140b;color:var(--pbk-gold);z-index:3}
 #pbkPanel .pbk-def{margin:8px 0 0;font-size:10.5px;line-height:1.5;color:var(--pbk-soft)}
@@ -16887,7 +16898,8 @@ document.head.appendChild(css);
     var curY = new Date().getFullYear();
     var year = ys.indexOf(curY) >= 0 ? curY : (ys[0] || curY);
     var pref = year + '-11-';
-    var c = { rows:rows.length, year:year, emi:0, lastDay:0, byDay:{}, byCli:{}, aberto:0, abertoGeral:0, ent:{}, entTot:0, entLast:0, uni:{}, units:[], du:0 };
+    var prefP = year + '-10-', prevRows = [], prevEnt = [];
+    var c = { prevByDay:{}, prevByCli:{}, prevEmi:0, prevWeek:{}, rows:rows.length, year:year, emi:0, lastDay:0, byDay:{}, byCli:{}, aberto:0, abertoGeral:0, ent:{}, entTot:0, entLast:0, uni:{}, units:[], du:0 };
     function un(r){ var k = r.n || 'Sem unidade'; return c.uni[k] || (c.uni[k] = {n:k, ent:0, sd:0, rota:0, sem:0}); }
     for(i=0;i<rows.length;i++){
       r = rows[i];
@@ -16898,6 +16910,10 @@ document.head.appendChild(css);
         if(okT){ if(emRota(r)) un(r).rota++; else un(r).sem++; }
       }
       d = r.dem;
+      if(d && d.indexOf(prefP) === 0){   /* mês anterior (outubro): guarda para comparar só o mesmo período */
+        var pd = parseInt(d.substr(8,2),10);
+        if(pd >= 1 && pd <= 31){ c.prevByDay[pd] = (c.prevByDay[pd]||0) + 1; prevRows.push([pd, r.a || 'Sem cliente']); }
+      }
       if(d && d.indexOf(pref) === 0){
         var day = parseInt(d.substr(8,2),10);
         if(day >= 1 && day <= 31){
@@ -16910,6 +16926,10 @@ document.head.appendChild(css);
         }
       }
       /* entregas realizadas em novembro (Mês = nov + Dia Entrega), como no gráfico Emissão x Entrega */
+      if(String(r.fd||'').toLowerCase() === 'out' && r.fc && r.c === 'ENTREGUE' && okT){   /* entregas realizadas no mês anterior */
+        var ayp = parseInt(r.an,10), ddp = parseInt(r.fc,10);
+        if((!ayp || ayp === year) && ddp >= 1 && ddp <= 31) prevEnt.push([ddp, r.n || 'Sem unidade']);
+      }
       if(String(r.fd||'').toLowerCase() === 'nov' && r.fc && r.c === 'ENTREGUE'){
         var ay = parseInt(r.an,10);
         if(!ay || ay === year){
@@ -16922,33 +16942,60 @@ document.head.appendChild(css);
         }
       }
     }
+    /* mesmo período do mês anterior: dias 1..último dia com emissão (por cliente/semana/total) */
+    for(i=0;i<prevRows.length;i++){
+      if(prevRows[i][0] <= c.lastDay){ c.prevEmi++; c.prevByCli[prevRows[i][1]] = (c.prevByCli[prevRows[i][1]]||0) + 1; }
+    }
+    c.prevEnt = 0;
+    for(i=0;i<prevEnt.length;i++){
+      if(prevEnt[i][0] <= Math.max(c.lastDay, c.entLast)){
+        var pk = prevEnt[i][1], pu = c.uni[pk] || (c.uni[pk] = {n:pk, ent:0, sd:0, rota:0, sem:0});
+        pu.prev = (pu.prev||0) + 1; c.prevEnt++;
+      }
+    }
     c.du = diasUteis(year, Math.max(c.lastDay, c.entLast));
     c.units = Object.keys(c.uni).map(function(k){ var u = c.uni[k]; u.tot = u.ent + u.rota + u.sem; return u; })
       .sort(function(a,b){ return (b.tot - a.tot) || coll(a.n, b.n); });
     return c;
   }
 
+  /* variação % vs. mês anterior */
+  function dlt(cur, prev){
+    if(!prev) return '';
+    var v = (cur - prev) / prev * 100;
+    if(Math.round(v) === 0) return '= 0%';
+    return (v >= 0 ? '▲ ' : '▼ ') + Math.abs(v).toFixed(0) + '%';
+  }
+  function prevPill(cur, prev){ return '<em class="pm" title="Mesmo período de outubro">out: '+nf(prev)+(prev ? ' ('+dlt(cur,prev)+')' : '')+'</em>'; }
+
   /* ---------- peças de HTML ---------- */
-  function rowHtml(label, small, v, tot, max, one){
-    var w = max ? Math.max(2, v/max*100) : 0;
+  function rowHtml(label, small, v, tot, max, one, prev){
+    var w = max ? Math.max(2, v/max*100) : 0, hp = (prev !== undefined && prev !== null);
+    var tick = hp ? '<span class="pbk-tick" style="left:'+(max ? Math.min(100, prev/max*100) : 0).toFixed(1)+'%" title="Mês anterior (mesmo período): '+nf(prev)+'"></span>' : '';
     return '<div class="pbk-row"><span class="pbk-lbl'+(one?' one':'')+'" title="'+esc(label)+'">'+esc(label)+(small?'<i>'+esc(small)+'</i>':'')+'</span>'+
-           '<span class="pbk-track"><span class="pbk-fill" style="width:'+w.toFixed(1)+'%"></span></span>'+
-           '<span class="pbk-val">'+nf(v)+'<i>'+pc(v,tot)+'</i></span></div>';
+           '<span class="pbk-track'+(hp?' cmp':'')+'"><span class="pbk-fill" style="width:'+w.toFixed(1)+'%"></span>'+tick+'</span>'+
+           '<span class="pbk-val">'+nf(v)+'<i>'+pc(v,tot)+'</i>'+(hp ? '<i class="pm" title="Mês anterior (mesmo período)">out '+nf(prev)+(prev ? ' '+dlt(v,prev) : '')+'</i>' : '')+'</span></div>';
   }
   var cmpD = function(v){ return v>=1000 ? (v/1000).toFixed(v>=10000?0:1).replace('.',',')+'k' : nf(v); };
   var dec1 = function(n){ return n.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}); };
 
   /* gráfico único: emissões (dourado) x entregas (prata), mesma escala */
-  function dualColsHtml(emi, ent, upTo, year){
-    var max = 0, k, h = '';
-    for(k=1;k<=upTo;k++){ if((emi[k]||0) > max) max = emi[k]; if((ent[k]||0) > max) max = ent[k]; }
+  function dualColsHtml(emi, ent, upTo, year, prev){
+    var max = 0, k, h = '', H = 104;
+    prev = prev || {};
+    for(k=1;k<=upTo;k++){ if((emi[k]||0) > max) max = emi[k]; if((ent[k]||0) > max) max = ent[k]; if((prev[k]||0) > max) max = prev[k]; }
     for(k=1;k<=upTo;k++){
       var e = emi[k]||0, t = ent[k]||0, wd = new Date(year,10,k).getDay();
       var he = max ? Math.round(e/max*100) : 0, ht = max ? Math.round(t/max*100) : 0;
-      h += '<div class="pbk-dcol'+((wd===0||wd===6)?' we':'')+'" title="'+p2(k)+'/11/'+year+' · '+nf(e)+' emissões · '+nf(t)+' entregas">'+
+      var pv = prev[k]||0, hpv = max ? Math.round(pv/max*100) : 0, pn = prev[k+1]||0, hpn = max ? Math.round(pn/max*100) : 0;
+      var line = '<svg class="pbk-pl" width="49" height="'+H+'" viewBox="0 0 49 '+H+'" aria-hidden="true">'+
+                 (k<upTo ? '<line x1="0" y1="'+(H-hpv)+'" x2="49" y2="'+(H-hpn)+'" stroke="#4cc9f0" stroke-width="2" stroke-dasharray="4 3" stroke-linecap="round"/>' : '')+
+                 '<circle cx="0" cy="'+(H-hpv)+'" r="3" fill="#4cc9f0" stroke="#0A0A0C" stroke-width="1"/></svg>';
+      h += '<div class="pbk-dcol'+((wd===0||wd===6)?' we':'')+'" title="'+p2(k)+'/11/'+year+' · '+nf(e)+' emissões · '+nf(t)+' entregas · '+p2(k)+'/10: '+nf(pv)+' emissões (mês anterior)">'+
            '<div class="pbk-pair">'+
              '<span class="pbk-bw'+(e&&e===max?' pk':'')+'"><span class="pbk-cv">'+(e?cmpD(e):'')+'</span><span class="pbk-cb" style="height:'+he+'px"></span></span>'+
              '<span class="pbk-bw sv'+(t&&t===max?' pk':'')+'"><span class="pbk-cv">'+(t?cmpD(t):'')+'</span><span class="pbk-cb" style="height:'+ht+'px"></span></span>'+
+             line+
            '</div>'+
            '<span class="pbk-cd">'+p2(k)+'</span><span class="pbk-cw">'+WD[wd]+'</span></div>';
     }
@@ -16958,20 +17005,21 @@ document.head.appendChild(css);
   /* tabela por unidade */
   function tableHtml(c){
     if(!c.units.length) return '<div class="pbk-empty" style="padding:14px 0">Sem entregas para o filtro selecionado.</div>';
-    var T = {ent:0, sd:0, rota:0, sem:0, tot:0};
+    var T = {ent:0, sd:0, rota:0, sem:0, tot:0, prev:0};
     var body = c.units.map(function(u){
-      T.ent += u.ent; T.sd += u.sd; T.rota += u.rota; T.sem += u.sem; T.tot += u.tot;
+      T.prev += (u.prev||0); T.ent += u.ent; T.sd += u.sd; T.rota += u.rota; T.sem += u.sem; T.tot += u.tot;
       return '<tr><td title="'+esc(u.n)+'">'+esc(u.n)+'</td>'+
         '<td>'+nf(u.ent)+'</td>'+
+        '<td class="pv">'+nf(u.prev||0)+(u.prev ? '<small>'+dlt(u.ent,u.prev)+'</small>' : '')+'</td>'+
         '<td>'+(c.du ? dec1(u.ent/c.du) : '—')+'</td>'+
         '<td class="rt">'+nf(u.rota)+'</td>'+
         '<td class="sr'+(u.sem?'':' z')+'">'+nf(u.sem)+'</td>'+
         '<td>'+(u.ent ? dec1(u.sd/u.ent) : '—')+'</td>'+
         '<td class="tt">'+nf(u.tot)+'</td></tr>';
     }).join('');
-    var foot = '<tr><td>Total</td><td>'+nf(T.ent)+'</td><td>'+(c.du ? dec1(T.ent/c.du) : '—')+'</td><td>'+nf(T.rota)+'</td><td>'+nf(T.sem)+'</td><td>'+(T.ent ? dec1(T.sd/T.ent) : '—')+'</td><td>'+nf(T.tot)+'</td></tr>';
+    var foot = '<tr><td>Total</td><td>'+nf(T.ent)+'</td><td class="pv">'+nf(T.prev)+(T.prev ? '<small>'+dlt(T.ent,T.prev)+'</small>' : '')+'</td><td>'+(c.du ? dec1(T.ent/c.du) : '—')+'</td><td>'+nf(T.rota)+'</td><td>'+nf(T.sem)+'</td><td>'+(T.ent ? dec1(T.sd/T.ent) : '—')+'</td><td>'+nf(T.tot)+'</td></tr>';
     return '<div class="pbk-tw"><table class="pbk-tb"><thead><tr>'+
-      '<th>Unidade</th><th>Entregas realizadas</th><th title="Entregas realizadas ÷ dias úteis">Média por dia útil</th>'+
+      '<th>Unidade</th><th>Entregas realizadas</th><th class="pv" title="Entregas realizadas em outubro nos mesmos dias (01 a '+p2(Math.max(c.lastDay,c.entLast))+'), com a variação do mês atual">Mês anterior (mesmo período)</th><th title="Entregas realizadas ÷ dias úteis">Média por dia útil</th>'+
       '<th title="EM ABERTO com Romaneio diferente de NÃO">Em rota de entrega</th><th title="EM ABERTO sem Romaneio">Em aberto sem rota</th>'+
       '<th title="Média da coluna Atraso Baixa (antecipado / no dia = 0)">Média de dias p/ finalizar</th><th title="Realizadas + em rota + em aberto sem rota">Total de entregas</th>'+
       '</tr></thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot></table></div>';
@@ -16998,8 +17046,8 @@ document.head.appendChild(css);
 
     /* Emissões x Entregas por dia (gráfico único) */
     h += '<div class="pbk-sec"><h3><span>Emissões e entregas por dia</span><em>'+nf(c.emi)+' emis. · '+nf(c.entTot)+' entr.</em></h3>'+
-         '<div class="pbk-leg"><span><i></i>Emissões</span><span><i class="sv"></i>Entregas</span></div>'+
-         (upTo ? dualColsHtml(c.byDay, c.ent, upTo, c.year) : '<div class="pbk-empty" style="padding:14px 0">Sem movimento em novembro.</div>')+'</div>';
+         '<div class="pbk-leg"><span><i></i>Emissões</span><span><i class="sv"></i>Entregas</span><span><i class="pm"></i>Emissões em outubro (mês anterior)</span></div>'+
+         (upTo ? dualColsHtml(c.byDay, c.ent, upTo, c.year, c.prevByDay) : '<div class="pbk-empty" style="padding:14px 0">Sem movimento em novembro.</div>')+'</div>';
 
     /* Tabela por unidade */
     var ff = fillFilters();
@@ -17015,26 +17063,28 @@ document.head.appendChild(css);
     for(w=1; w<=5; w++){
       var ini = (w-1)*7+1, fim = Math.min(w*7, 30);
       if(ini > c.lastDay) break;
-      var s = 0, dI;
-      for(dI=ini; dI<=fim; dI++) s += (c.byDay[dI]||0);
-      weeks.push({ w:w, ini:ini, fim:fim, v:s, parcial: c.lastDay < fim });
+      var s = 0, sp = 0, dI;
+      for(dI=ini; dI<=fim; dI++){ s += (c.byDay[dI]||0); if(dI <= c.lastDay) sp += (c.prevByDay[dI]||0); }
+      weeks.push({ w:w, ini:ini, fim:fim, v:s, p:sp, parcial: c.lastDay < fim });
       if(s > max) max = s;
+      if(sp > max) max = sp;
     }
     if(weeks.length){
-      h += '<div class="pbk-sec"><h3><span>Emissões por semana</span><em>'+nf(c.emi)+'</em></h3>'+
+      h += '<div class="pbk-sec"><h3><span>Emissões por semana</span><em>'+nf(c.emi)+'</em>'+prevPill(c.emi, c.prevEmi)+'</h3>'+
            weeks.map(function(x){
-             return rowHtml(x.w+'ª semana', p2(x.ini)+'–'+p2(x.fim)+'/11'+(x.parcial?' · parcial':''), x.v, c.emi, max);
+             return rowHtml(x.w+'ª semana', p2(x.ini)+'–'+p2(x.fim)+'/11'+(x.parcial?' · parcial':''), x.v, c.emi, max, false, x.p);
            }).join('')+'</div>';
     }
 
     /* Emissões por cliente */
     var mc = clis.length ? clis[0][1] : 0;
+    clis.forEach(function(x){ var pv = c.prevByCli[x[0]] || 0; if(pv > mc) mc = pv; });
     if(clis.length){
-      h += '<div class="pbk-sec"><h3><span>Emissões por cliente</span><em>'+nf(clis.length)+' cliente'+(clis.length===1?'':'s')+'</em></h3><div class="pbk-scroll">'+
-           clis.map(function(x,i){ return rowHtml((i+1)+'. '+x[0], '', x[1], c.emi, mc); }).join('')+'</div></div>';
+      h += '<div class="pbk-sec"><h3><span>Emissões por cliente</span><em>'+nf(clis.length)+' cliente'+(clis.length===1?'':'s')+'</em>'+prevPill(c.emi, c.prevEmi)+'</h3><div class="pbk-scroll">'+
+           clis.map(function(x,i){ return rowHtml((i+1)+'. '+x[0], '', x[1], c.emi, mc, false, c.prevByCli[x[0]] || 0); }).join('')+'</div></div>';
     }
 
-    h += '<p class="pbk-note">(novembro/'+c.year+')<br>Dados da operação NORMAL. Os filtros UF e Unidade valem só para o Resumo por unidade.</p>';
+    h += '<p class="pbk-note">(novembro/'+c.year+')<br>Linha/marcador azul = mesmo período de outubro/'+c.year+' (dias 01 a '+p2(c.lastDay)+'). Dados da operação NORMAL. Os filtros UF e Unidade valem só para o Resumo por unidade.</p>';
     body.innerHTML = h;
     bindFilters();
   }
