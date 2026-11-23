@@ -1765,7 +1765,7 @@ textarea.qual-cell{min-height:34px;line-height:1.35;}
   .terc thead th.c-day{z-index:5;}
   .terc td.c-day .wd{margin-left:6px;font-size:11px;font-weight:700;color:var(--text-soft);text-transform:uppercase;}
   .terc tr.sat td.c-day .wd{color:var(--rodo-accent);}
-  .terc tr.sun{opacity:.5;}
+  .terc tr.sun{opacity:.85;}
   .terc tr.today td.c-day{box-shadow:inset 4px 0 0 var(--rodo-accent);}
   .terc tr.over td:not(.c-day){background:rgba(220,38,38,.07);}
   .terc tr.over td.c-day{box-shadow:inset 4px 0 0 var(--bad);}
@@ -4579,12 +4579,12 @@ window.rodoLogoCliente = function(nome){
   /* quantidades exibidas no modal: padrão do dia; se o limite foi personalizado, só as que batem com o valor guardado */
   function qtdFor(w, date){
     const c = customLim(date);
-    if(!c) return defQtd(w, date);
+    if(!c) return w === 0 ? null : defQtd(w, date);
     const q = lqty[date];
     return (q && q.length === 3 && Math.round(sumQtd(q, date) * 100) === Math.round(c * 100)) ? q : null;
   }
   function customLim(date){ const v = Number(lims[date]); return v >= LIM_MIN ? v : 0; }
-  function limitFor(w, date){ if(w === 0) return null; const v = customLim(date); return v > 0 ? v : defLimit(w, date); }
+  function limitFor(w, date){ const v = customLim(date); if(w === 0) return v > 0 ? v : null; return v > 0 ? v : defLimit(w, date); }   // domingo: sem limite, a menos que seja definido pela engrenagem
   const fmtNum = n => Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const fmtBRL = n => 'R$ ' + fmtNum(n);
   function parseMoney(x){
@@ -4821,11 +4821,11 @@ window.rodoLogoCliente = function(nome){
       const r = db[date];
       const cls = (w === 0 ? 'sun' : (w === 6 ? 'sat' : '')) + (date === hojeKey ? ' today' : '') + (date === ontKey ? ' yest' : '') + (novoMes ? ' sep' : '');
       const tag = date === ontKey ? '<span class="terc-tag y">ONTEM</span>' : (date === hojeKey ? '<span class="terc-tag h">HOJE</span>' : '');
-      h += '<tr data-date="'+date+'" data-w="'+w+'" class="'+cls+'"><td class="c-day"><b>'+pad(d)+'</b>/'+pad(m)+'<span class="wd">'+WD[w]+'</span>'+tag+(w === 0 ? '' : '<button type="button" class="terc-gear'+(customLim(date) > 0 ? ' custom' : '')+'" title="Editar limite deste dia" aria-label="Editar limite do dia '+d+'">'+GEAR_SVG+'</button>')+'</td>';
+      h += '<tr data-date="'+date+'" data-w="'+w+'" class="'+cls+'"><td class="c-day"><b>'+pad(d)+'</b>/'+pad(m)+'<span class="wd">'+WD[w]+'</span>'+tag+'<button type="button" class="terc-gear'+(customLim(date) > 0 ? ' custom' : '')+'" title="Editar limite deste dia" aria-label="Editar limite do dia '+d+'">'+GEAR_SVG+'</button></td>';
       PER.forEach(p=>{
         for(let i = 0; i < 3; i++){
           const v = cellVal(r,p,i);
-          h += '<td'+(i===0?' class="g"':'')+'><input class="terc-in" inputmode="numeric" maxlength="3" autocomplete="off" data-p="'+p+'" data-i="'+i+'" value="'+v+'" aria-label="'+CARG[i]+' '+PERN[p]+' dia '+d+'"'+(w===0?' disabled':'')+'></td>';
+          h += '<td'+(i===0?' class="g"':'')+'><input class="terc-in" inputmode="numeric" maxlength="3" autocomplete="off" data-p="'+p+'" data-i="'+i+'" value="'+v+'" aria-label="'+CARG[i]+' '+PERN[p]+' dia '+d+'"></td>';
         }
       });
       h += '<td class="g t-qty"></td><td class="t-st"></td>'
@@ -4849,7 +4849,10 @@ window.rodoLogoCliente = function(nome){
     const tot = totalOf(r), val = valueOf(r, date), filled = isFilled(r);
     const qtyEl = tr.querySelector('.t-qty'), stEl = tr.querySelector('.t-st'), sel = tr.querySelector('.terc-just'), apr = tr.querySelector('.terc-apr');
     let pill = '<span class="terc-pill na">—</span>', over = false;
-    if(lim === null){ qtyEl.textContent = '—'; pill = '<span class="terc-pill na">Sem operação</span>'; }
+    if(lim === null){   // domingo: marcação liberada, sem limite diário
+      if(filled){ qtyEl.textContent = tot; pill = '<span class="terc-pill na">Sem limite</span>'; }
+      else { qtyEl.textContent = '—'; pill = '<span class="terc-pill na">—</span>'; }
+    }
     else if(!filled){ qtyEl.textContent = '—'; }
     else {
       qtyEl.textContent = tot;
@@ -4876,12 +4879,13 @@ window.rodoLogoCliente = function(nome){
     let uteis = 0, preench = 0, total = 0, valor = 0, exc = 0, pend = 0;
     for(let d = 1; d <= dim; d++){
       const date = ano + '-' + pad(mes) + '-' + pad(d), w = new Date(ano, mes - 1, d).getDay();
-      const lim = limitFor(w, date); if(lim === null) continue;
+      const lim = limitFor(w, date), r = db[date];
+      if(lim === null && !isFilled(r)) continue;       // domingo só conta se tiver marcação
       uteis++;
-      const r = db[date]; if(!isFilled(r)) continue;
+      if(!isFilled(r)) continue;
       preench++;
       const t = totalOf(r), v = valueOf(r, date); total += t; valor += v;
-      if(isOver(v, lim)){ exc++; if(!r.j) pend++; }
+      if(lim !== null && isOver(v, lim)){ exc++; if(!r.j) pend++; }
     }
     $('tercKpiDias').textContent = preench + ' / ' + uteis;
     $('tercKpiTotal').textContent = total;
@@ -4893,10 +4897,10 @@ window.rodoLogoCliente = function(nome){
     const col = new Array(9).fill(0); let tot = 0, valTot = 0, excTot = 0;
     document.querySelectorAll('#tercBody tr').forEach(tr => {
       const date = tr.dataset.date, lim = limitFor(Number(tr.dataset.w), date), r = db[date];
-      if(lim === null || !isFilled(r)) return;
+      if(!isFilled(r)) return;
       let k = 0;
       PER.forEach(p=>{ for(let i=0;i<3;i++){ const v = cellVal(r,p,i); if(v !== '') col[k] += v; k++; } });
-      const t = totalOf(r), v = valueOf(r, date); tot += t; valTot += v; if(isOver(v, lim)) excTot += (v - lim);
+      const t = totalOf(r), v = valueOf(r, date); tot += t; valTot += v; if(lim !== null && isOver(v, lim)) excTot += (v - lim);
     });
     col.forEach((v,k)=>{ const el = document.querySelector('#tercFoot [data-f="'+k+'"]'); if(el) el.textContent = v; });
     const tt = document.querySelector('#tercFoot [data-f="tot"]'); if(tt) tt.textContent = tot;
@@ -4907,8 +4911,8 @@ window.rodoLogoCliente = function(nome){
     document.querySelectorAll('#tercBody tr').forEach(tr => {
       const date = tr.dataset.date, sun = Number(tr.dataset.w) === 0, blocked = pset.size > 0 && !pset.has(date);
       tr.querySelectorAll('.terc-in').forEach(inp => {
-        inp.disabled = sun || blocked;
-        if(blocked && !sun) inp.title = 'Bloqueado: informe a justificativa do dia acima do limite para liberar'; else inp.removeAttribute('title');
+        inp.disabled = blocked;
+        if(blocked) inp.title = 'Bloqueado: informe a justificativa do dia acima do limite para liberar'; else inp.removeAttribute('title');
       });
     });
     if(lock){
@@ -4967,7 +4971,7 @@ window.rodoLogoCliente = function(nome){
     const w = Number(tr.dataset.w), d = Number(limDate.slice(8)), mo = Number(limDate.slice(5,7));
     $('tercModalT').textContent = 'Limite do dia ' + pad(d) + '/' + pad(mo) + ' (' + WD[w] + ')';
     $('tercModalSub').textContent = 'Valor do dia = AB × ' + fmtBRL(ratesFor(limDate)[0]) + ' + AE × ' + fmtBRL(ratesFor(limDate)[1]) + ' + CF × ' + fmtBRL(ratesFor(limDate)[2]) + ', somando todos os períodos. Informe as quantidades para calcular o limite em R$ ou digite o valor direto. Acima do limite, a justificativa é obrigatória.';
-    $('tercLimDia').value = fmtNum(limitFor(w, limDate));
+    { const _l = limitFor(w, limDate); $('tercLimDia').value = _l === null ? '' : fmtNum(_l); }
     { const q = qtdFor(w, limDate); ['AB','AE','CF'].forEach((c, i) => { $('tercQtd' + c).value = q ? q[i] : ''; }); }
     $('tercLimReset').hidden = !(customLim(limDate) > 0);
     modal.hidden = false; $('tercLimDia').focus(); $('tercLimDia').select();
@@ -4984,7 +4988,7 @@ window.rodoLogoCliente = function(nome){
     if(!(v >= LIM_MIN)){ alert('Informe o limite em R$ (mínimo R$ 1.000,00).'); return; }
     const w = Number(document.querySelector('#tercBody tr[data-date="'+limDate+'"]').dataset.w);
     const qs = ['AB','AE','CF'].map(c => $('tercQtd' + c).value);
-    if(v === defLimit(w, limDate)){ delete lims[limDate]; delete lqty[limDate]; }
+    if(w !== 0 && v === defLimit(w, limDate)){ delete lims[limDate]; delete lqty[limDate]; }
     else {
       lims[limDate] = v;
       if(qs.every(x => x !== '') && Math.round(sumQtd(qs, limDate) * 100) === Math.round(v * 100)) lqty[limDate] = qs.map(Number); else delete lqty[limDate];
@@ -5062,9 +5066,9 @@ window.rodoLogoCliente = function(nome){
     let sPrev = 0, sReal = 0, sCP = 0, sCR = 0, sDq = 0, sDr = 0;
     for(let d = 1; d <= dim; d++){
       const w = new Date(ano, mes - 1, d).getDay();
-      if(w === 0) continue;                                   // domingo: sem operação
+      if(w === 0 && !isFilled(db[ano + '-' + pad(mes) + '-' + pad(d)])) continue;   // domingo sem marcação: fora do Excel
       const date = ano + '-' + pad(mes) + '-' + pad(d), r = db[date];
-      const lim = limitFor(w, date), filled = isFilled(r), q = qtdFor(w, date);
+      const lim = limitFor(w, date), filled = isFilled(r), q = w === 0 ? null : qtdFor(w, date);
       const dayOver = filled && lim !== null && isOver(valueOf(r, date), lim);
       for(let i = 0; i < 3; i++){
         const n = ws.rowCount + 1;
@@ -5078,7 +5082,7 @@ window.rodoLogoCliente = function(nome){
         else status = dayOver ? 'EXCEDEU' : 'OK';
         const exc = status === 'EXCEDEU';
         const row = ws.addRow([
-          new Date(Date.UTC(ano, mes - 1, d)), WD[w].toLowerCase(), w === 6 ? 'Sábado' : 'Útil', EQUIPES[i], '',
+          new Date(Date.UTC(ano, mes - 1, d)), WD[w].toLowerCase(), w === 6 ? 'Sábado' : (w === 0 ? 'Domingo' : 'Útil'), EQUIPES[i], '',
           prev, real, rate,
           prev !== null ? { formula:'F'+n+'*H'+n, result:prev*rate } : null,
           real !== null ? { formula:'G'+n+'*H'+n, result:real*rate } : null,
