@@ -6702,11 +6702,11 @@ function render(){
     // Entregas por mês: respeita todos os filtros, EXCETO o filtro Mês (o card não muda ao escolher um mês)
     const _fSemMes = Object.assign({}, currentFilter(), { mes: '' });
     const _rowsMes = applyFilter(DATA, _fSemMes);
-    const _cont = new Map();   // entregas por mês (coluna Mês da entrega: r.fd)
+    const _cont = new Map();   // entregas com Status ENTREGUE por mês (mês da entrega: r.fd)
     const _emis = new Map();   // emissões por mês (coluna Data de Emissão: r.dem)
     for(const r of _rowsMes){
       const m = String(r.fd || '').toLowerCase();
-      if(m) _cont.set(m, (_cont.get(m) || 0) + 1);
+      if(m && String(r.c || '').toUpperCase() === 'ENTREGUE') _cont.set(m, (_cont.get(m) || 0) + 1);
       const me = mesFromDem(r.dem);
       if(me) _emis.set(me, (_emis.get(me) || 0) + 1);
     }
