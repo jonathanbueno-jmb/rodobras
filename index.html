@@ -6702,21 +6702,24 @@ function render(){
     // Entregas por mês: respeita todos os filtros, EXCETO o filtro Mês (o card não muda ao escolher um mês)
     const _fSemMes = Object.assign({}, currentFilter(), { mes: '' });
     const _rowsMes = applyFilter(DATA, _fSemMes);
-    const _cont = new Map();
+    const _cont = new Map();   // entregas por mês (coluna Mês da entrega: r.fd)
+    const _emis = new Map();   // emissões por mês (coluna Data de Emissão: r.dem)
     for(const r of _rowsMes){
       const m = String(r.fd || '').toLowerCase();
-      if(!m) continue;
-      _cont.set(m, (_cont.get(m) || 0) + 1);
+      if(m) _cont.set(m, (_cont.get(m) || 0) + 1);
+      const me = mesFromDem(r.dem);
+      if(me) _emis.set(me, (_emis.get(me) || 0) + 1);
     }
-    const _meses = sortMeses(Array.from(_cont.keys()));
+    const _meses = sortMeses(Array.from(new Set([..._cont.keys(), ..._emis.keys()])));
     const body = document.getElementById('kTop5UfsBody');
     if(body){
       if(!_meses.length){
         body.innerHTML = '<div class="line"><span style="color:#94a3b8">Sem dados</span></div>';
       } else {
-        body.innerHTML = _meses.map(m => {
+        const _hdr = '<div class="line" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.6;"><span>Mês</span><span class="val-group"><span>Entregas</span><span style="min-width:64px;text-align:right">Emissões</span></span></div>';
+        body.innerHTML = _hdr + _meses.map(m => {
           const lbl = m.charAt(0).toUpperCase() + m.slice(1);
-          return `<div class="line"><span>${lbl}</span><b>${fmt(_cont.get(m))}</b></div>`;
+          return `<div class="line"><span>${lbl}</span><span class="val-group"><b>${fmt(_cont.get(m) || 0)}</b><span class="pct" style="min-width:64px;text-align:right;background:#dbeafe;color:#1e40af;border-color:#93c5fd" title="Emissões em ${lbl} (Data de Emissão)">${fmt(_emis.get(m) || 0)}</span></span></div>`;
         }).join('');
       }
     }
